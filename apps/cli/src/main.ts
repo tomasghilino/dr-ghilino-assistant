@@ -10,10 +10,11 @@ import {
 } from "@ghilino/core";
 import { createAdminClient } from "@insforge/sdk";
 import { ingestCommand, kbListCommand } from "./commands/ingest.ts";
+import { evalRetrievalCommand, searchCommand } from "./commands/retrieval.ts";
 
 /**
  * Admin CLI. Runs on a developer's machine or in CI, never in the public API.
- * Commands are added phase by phase: eval:retrieval (3), eval:agent (7) and ops:report (7) are next.
+ * Commands are added phase by phase: eval:agent (7) and ops:report (7) are next.
  */
 const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promise<number> }> = {
   "config:check": {
@@ -43,6 +44,14 @@ const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promi
   "kb:list": {
     summary: "List published documents, versions and chunk counts (no content)",
     run: kbListCommand,
+  },
+  search: {
+    summary: "Show how a question is ranked and whether the confidence gate passes (--context)",
+    run: searchCommand,
+  },
+  "eval:retrieval": {
+    summary: "Run evals/retrieval-cases.json against the knowledge base and save a report",
+    run: evalRetrievalCommand,
   },
   "db:status": {
     summary: "Call assistant_status() on InsForge with the admin key (counts only, no content)",

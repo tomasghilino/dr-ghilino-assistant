@@ -23,3 +23,11 @@ hash. It returns both raw scores so the application can apply a similarity thres
   eval shows ranking errors that fusion does not fix.
 - **`pg_trgm` fuzzy matching**: not documented on InsForge; accent folding in TypeScript covers
   the common case (missing accents).
+
+## Implementation note (Phase 3)
+
+Implemented as `kb_hybrid_search` (migrations `20261105214536` and `20261105220124`). Two details
+differ from the text above, both explained in [ADR 0011](0011-retrieval-service-and-two-signal-confidence-gate.md):
+the lexical query is `plainto_tsquery` with OR semantics instead of `websearch_to_tsquery` (which
+requires every term), and near-duplicates are dropped in the retrieval service rather than in SQL.
+The function also returns a lexical coverage signal used by the confidence gate.

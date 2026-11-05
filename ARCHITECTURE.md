@@ -91,7 +91,7 @@ sequenceDiagram
   AG->>L: system + tools + history + question
   L-->>AG: tool_use search_knowledge{query}
   AG->>T: validate input (zod), execute
-  T->>DB: hybrid_search(embedding, text, k)
+  T->>DB: kb_hybrid_search(embedding, text, k)
   T-->>AG: chunks + scores + source URLs (as untrusted data)
   AG->>L: tool_result
   L-->>AG: final answer (structured: text, cited source ids, kind)
@@ -127,22 +127,28 @@ per chunk → embed only chunks whose hash is new → write a new **document ver
 transaction and mark the previous one superseded. Unchanged documents are skipped, so
 re-running is cheap and idempotent. Every run writes an `ingestion_runs` report.
 
-**Hybrid search** is one SQL function, `hybrid_search(...)`:
+**Hybrid search** is one SQL function, `kb_hybrid_search(...)` (ADR 0004, ADR 0011):
 
 - _Semantic_: cosine distance on `vector(1024)` with an HNSW index.
-- _Lexical_: `websearch_to_tsquery('spanish', …)` against a `tsvector` of the accent-folded
-  text, ranked with `ts_rank_cd`. Accent folding happens in TypeScript so we don't depend on
+- _Lexical_: `plainto_tsquery('spanish', …)` with its terms joined by OR (a question's words are
+  alternatives, not requirements) against a `tsvector` of the accent-folded text, ranked with
+  `ts_rank_cd`. Accent folding happens in TypeScript so we don't depend on
   the `unaccent` extension (available on InsForge but not installed, and absent from its docs).
 - _Fusion_: Reciprocal Rank Fusion, `score = Σ 1 / (k + rank)`, `k = 60`. RRF uses ranks, not raw
   scores, so it can merge a cosine similarity and a `ts_rank` that live on different scales.
-- Only chunks of the **current** version of each document, optional filters by section or
-  document kind, duplicates collapsed by content hash, top-K (default 5).
-- **Confidence gate**: the best cosine similarity must reach `RETRIEVAL_MIN_SIMILARITY`
-  (tuned on the eval set in Phase 3). Below it the tool returns no passages, and the agent
-  abstains.
+- Only chunks of the **current** version of each document, an optional source filter, top-K
+  (default 5). The retrieval service then drops near-duplicates (shingle containment, as in
+  ingestion).
+- **Confidence gate**, two signals: the best cosine similarity reaches `RETRIEVAL_MIN_SIMILARITY`
+  (0.35), **or** one chunk contains every term of the question (`RETRIEVAL_MIN_LEXICAL_COVERAGE`).
+  The second rescues identifiers such as "virrey vertiz 117", which embeddings score as low as
+  off-topic questions. Below both, the tool returns no passages and the agent abstains.
+- Passages reach the model as `<source id="S1" …>` blocks with `<` and `>` escaped, within a
+  2,000-token budget.
 
-No reranker for now: with dozens of chunks, a cross-encoder adds a vendor call and latency for
-gains we can't measure yet. The retrieval eval (Recall@K, MRR) decides whether it earns its place.
+Measured in Phase 3 ([EVALUATION.md](EVALUATION.md)): Recall@5 100% on 32 answerable questions; the
+gate refuses 0 of 30 answerable questions and lets 4 of 12 unanswerable ones through (the agent
+must then say the site does not cover it). No reranker: ranking is not where the errors are.
 
 ## 5. Agent and LLM
 
