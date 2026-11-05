@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@ghilino/core": "workspace:*"
+    "@ghilino/core": "workspace:*",
+    "@insforge/sdk": "1.5.2"
   }
 }

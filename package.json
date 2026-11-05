@@ -10,13 +10,14 @@
     "typecheck": "pnpm -r --parallel run typecheck",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "test": "vitest run",
+    "test": "vitest run --project unit --project integration",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:watch": "vitest",
     "verify": "pnpm lint && pnpm typecheck && pnpm test",
     "dev:api": "pnpm --filter @ghilino/api dev",
-    "cli": "tsx apps/cli/src/main.ts"
+    "cli": "tsx apps/cli/src/main.ts",
+    "test:live": "LIVE=1 vitest run --project live"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.5",

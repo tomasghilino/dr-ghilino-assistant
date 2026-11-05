@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **proposal, Phase 0** (2026-11-05). Sections marked _to verify_ depend on InsForge
+Status: **Phase 1** (2026-11-05). Verified against the real InsForge project where marked _verified_; sections marked _to verify_ depend on InsForge
 behaviour that the docs do not state and that we check on a real project in Phase 1 or 8.
 
 ## 1. Goal and constraints
@@ -12,7 +12,7 @@ abstains when it cannot find support, and never gives medical advice.
 Constraints that shape the design:
 
 - **Backend on InsForge.** Postgres 15 with pgvector behind PostgREST, Deno edge functions,
-  encrypted secrets, Sites (static hosting on Vercel's CDN), pg_cron schedules.
+  encrypted secrets, Sites (static hosting on Vercel's CDN), HTTP schedules. _Verified_: PostgreSQL 15.18, pgvector 0.7.4, the `spanish` text search config; `pg_cron` is installed but not callable by `project_admin`, so jobs go through InsForge schedules.
   No built-in rate limiting for functions. Function limits (timeout, memory) are not
   documented.
 - **Anonymous public endpoint** that spends Anthropic credits, so abuse control and a cost
@@ -33,7 +33,7 @@ flowchart LR
     S["Sites (CDN)<br/>widget.js"]
     F["Edge function chat-api (Deno)<br/>HTTP adapter → core"]
     DB[("Postgres 15<br/>pgvector + Spanish FTS<br/>SQL functions (RPC)")]
-    CRON["pg_cron<br/>cleanup jobs"]
+    CRON["InsForge schedules<br/>cleanup calls"]
     SEC["Secrets"]
   end
   A["Anthropic API<br/>Claude Haiku 5.5"]
@@ -61,7 +61,7 @@ flowchart LR
 | 4   | **LLM provider** (`packages/core/llm`)                 | Inside the function                                         | `LlmProvider` port with neutral types; `AnthropicProvider` adapter (timeouts, retries, usage, cost).                      |
 | 5   | **Retrieval** (`packages/core/retrieval`)              | Function + Postgres                                         | Query embedding, hybrid search, fusion, dedup, confidence gate, context assembly.                                         |
 | 6   | **Ingestion** (`packages/core/ingestion` + `apps/cli`) | Admin's machine or CI, never public                         | Fetch, extract, clean, chunk, hash, embed, version, publish.                                                              |
-| 7   | **Database** (`db/migrations`)                         | InsForge Postgres                                           | Tables, indexes, and the SQL functions that are the only data API.                                                        |
+| 7   | **Database** (`migrations/`)                           | InsForge Postgres                                           | Tables, indexes, and the SQL functions that are the only data API.                                                        |
 | 8   | **Sessions** (`packages/core/sessions`)                | Function + Postgres                                         | Short-lived, encrypted conversation context with expiry and scheduled cleanup.                                            |
 | 9   | **Safety** (`packages/core/safety`)                    | Function                                                    | Input guard, emergency fast path, PII redaction, output guard (URL allowlist, citation check, prompt-leak canary).        |
 | 10  | **Observability** (`packages/core/observability`)      | Function + Postgres + CLI                                   | Content-free metrics per request, cost estimate, daily budget, ops report.                                                |
@@ -132,7 +132,7 @@ re-running is cheap and idempotent. Every run writes an `ingestion_runs` report.
 - _Semantic_: cosine distance on `vector(1024)` with an HNSW index.
 - _Lexical_: `websearch_to_tsquery('spanish', …)` against a `tsvector` of the accent-folded
   text, ranked with `ts_rank_cd`. Accent folding happens in TypeScript so we don't depend on
-  the `unaccent` extension, which InsForge does not document.
+  the `unaccent` extension (available on InsForge but not installed, and absent from its docs).
 - _Fusion_: Reciprocal Rank Fusion, `score = Σ 1 / (k + rank)`, `k = 60`. RRF uses ranks, not raw
   scores, so it can merge a cosine similarity and a `ts_rank` that live on different scales.
 - Only chunks of the **current** version of each document, optional filters by section or
@@ -174,7 +174,7 @@ gains we can't measure yet. The retrieval eval (Recall@K, MRR) decides whether i
   before the model sees them, and the widget tells the visitor not to share them.
 - **No conversation logs.** Session context is AES-GCM encrypted with a key that lives in
   function secrets, not in the database, expires after 30 minutes idle and is deleted by a
-  pg_cron job. Metrics rows have no text.
+  scheduled cleanup call (InsForge schedules) plus opportunistic deletes on write. Metrics rows have no text.
 
 ## 7. Data model (first migration)
 
@@ -190,10 +190,14 @@ gains we can't measure yet. The retrieval eval (Recall@K, MRR) decides whether i
 | `rate_limit_buckets` | Fixed-window counters per hashed key.                                                                                            |
 | `request_metrics`    | Content-free telemetry per request.                                                                                              |
 
-Row-level security is on for every table with **no policies**, so the public `anon` key can
-read nothing. All access goes through SQL functions whose `EXECUTE` is revoked from `PUBLIC` and
-granted only to the admin role used by the function and the CLI (_to verify on InsForge in
-Phase 1_: the role behind the `ik_` admin key).
+Tables live in `public` (InsForge's convention; migrations run as `project_admin`, which may only
+own objects there) with a `kb_` prefix for the knowledge base. _Verified_: InsForge grants `anon`
+and `authenticated` SELECT/INSERT/UPDATE/DELETE on every new `public` table by default, so the
+migration **revokes** them explicitly, and enables row-level security with **no policies** as a second
+barrier. SQL functions revoke `EXECUTE` from `PUBLIC`, `anon` and `authenticated` and grant it to
+`project_admin`, the role behind the server-side API key (_verified_: `current_user` for admin-key
+calls; it has `BYPASSRLS`). A live test proves the public anon key gets `42501 permission denied`
+on every table and function.
 
 ## 8. Why the data API is SQL functions
 
@@ -236,18 +240,18 @@ the model. See docs/whatsapp-future.md (written in Phase 5).
 | ------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------- |
 | `chat-api` edge function | `apps/api` bundled with esbuild into one ESM file (npm deps as `npm:` imports) | InsForge Functions (Deno)                                |
 | `widget.js` + demo page  | `apps/widget` built with Vite                                                  | InsForge Sites                                           |
-| Database schema          | `db/migrations/*.sql`                                                          | `insforge db migrations up`                              |
+| Database schema          | `migrations/*.sql`                                                             | `insforge db migrations up`                              |
 | Knowledge base           | `pnpm ingest`                                                                  | Run by an admin; writes through admin-only SQL functions |
 
 ## 11. Risks and open questions
 
-| Risk                                                | Mitigation                                                                                                |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Function timeout unknown (possibly 30 s)            | Turn deadline 20 s, max 4 tool rounds, Haiku at low effort; measured in Phase 8.                          |
-| SSE streaming from functions not demonstrated       | v1 returns JSON with a typing indicator; streaming is a later, measured change.                           |
-| Free plan pauses after 7 days without requests      | Fine for development; production needs traffic, a keep-alive schedule, or Pro ($25/month, your decision). |
-| Tests run on Postgres 18 (PGlite), production is 15 | Avoid features newer than 15; run migrations and a smoke test on the real project.                        |
-| `pg_trgm` / `unaccent` not documented on InsForge   | Not used. Accent folding in TypeScript.                                                                   |
-| Origin header and IP can be spoofed or shared       | Rate limit by hashed IP and session, plus a global daily budget; documented limits.                       |
-| Embedding provider may use API data for training    | Opt out at the provider before production (Voyage via MongoDB Atlas org settings).                        |
-| Corpus is tiny, RAG may be overkill today           | Eval includes a full-context baseline so the trade-off is measured.                                       |
+| Risk                                                             | Mitigation                                                                                                |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Function timeout unknown (possibly 30 s)                         | Turn deadline 20 s, max 4 tool rounds, Haiku at low effort; measured in Phase 8.                          |
+| SSE streaming from functions not demonstrated                    | v1 returns JSON with a typing indicator; streaming is a later, measured change.                           |
+| Free plan pauses after 7 days without requests                   | Fine for development; production needs traffic, a keep-alive schedule, or Pro ($25/month, your decision). |
+| Tests run on Postgres 18 (PGlite), production is 15              | Avoid features newer than 15; run migrations and a smoke test on the real project.                        |
+| `pg_trgm` / `unaccent` available but not installed or documented | Not used. Accent folding in TypeScript.                                                                   |
+| Origin header and IP can be spoofed or shared                    | Rate limit by hashed IP and session, plus a global daily budget; documented limits.                       |
+| Embedding provider may use API data for training                 | Opt out at the provider before production (Voyage via MongoDB Atlas org settings).                        |
+| Corpus is tiny, RAG may be overkill today                        | Eval includes a full-context baseline so the trade-off is measured.                                       |

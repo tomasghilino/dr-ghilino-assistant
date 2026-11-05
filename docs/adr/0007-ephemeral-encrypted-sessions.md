@@ -10,8 +10,11 @@ despite the disclaimer. A future WhatsApp channel cannot keep history on the cli
 ## Decision
 
 `chat_sessions` keeps at most the last 6 turns, AES-GCM encrypted with `SESSION_ENCRYPTION_KEY`
-(a function secret, not in the database), `expires_at` 30 minutes after the last message, deleted by
-a pg_cron job every 10 minutes and on explicit "borrar conversación". Application logs and metrics
+(a function secret, not in the database), `expires_at` 30 minutes after the last message, deleted on
+explicit "borrar conversación", opportunistically by every session write, and by an InsForge schedule
+that calls a maintenance endpoint every 10 minutes (`pg_cron` is installed on InsForge but not callable
+by `project_admin`, verified 2026-11-05). Reads ignore expired rows, so cleanup lag never extends a
+session. Application logs and metrics
 never contain message text.
 
 ## Alternatives

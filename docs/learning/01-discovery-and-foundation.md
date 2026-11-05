@@ -103,7 +103,7 @@ That is why we also need the similarity **threshold** and the instruction to abs
 
 Visitors type "Vertiz", "Delia", "sabados". We store `search_text` lowercased and without
 diacritics, and fold the query the same way, so both sides meet. We do it in TypeScript
-(`foldForSearch`) because InsForge does not document the `unaccent` extension. One function, unit
+(`foldForSearch`) because the `unaccent` extension is not installed or documented on InsForge. One function, unit
 tested, works on every runtime.
 
 ## 7. Architecture ideas used in Phase 1
@@ -114,9 +114,15 @@ tested, works on every runtime.
   agent will serve the widget today and WhatsApp later.
 - **Runtime boundary enforced by the compiler.** `packages/core` is type-checked without Node
   types, so `process.env` there is a compile error, not a Deno crash in production.
-- **Database as a security boundary.** Tables sit in a schema PostgREST does not expose, with RLS on
-  and no policies. The public anon key can reach nothing. The only door is a set of SQL functions
-  that only the admin role may execute. The integration test proves `anon` gets "permission denied".
+- **Database as a security boundary.** Two independent barriers: SQL privileges (who may run
+  `SELECT` on a table at all) and row-level security (which rows a permitted role sees). We revoke
+  the privileges _and_ enable RLS with no policies. The only door is a set of SQL functions that
+  only the admin role may execute.
+- **Check the platform, not the docs.** On the real project, `pg_default_acl` showed that InsForge
+  grants `anon` full read/write on every new `public` table. A migration that "just enabled RLS"
+  would have been safe only by luck of the second barrier. Our migration revokes the grants, the
+  PGlite harness reproduces InsForge's defaults so that revoke is tested, and a live test proves the
+  public key gets `42501 permission denied` through InsForge's real API.
 - **Config validation at the edge.** zod parses env vars once, applies defaults and reports _names_
   of bad variables, never values, so a misconfigured secret never lands in a log.
 - **Real database in tests.** PGlite runs Postgres 18 in WebAssembly inside the test process. The
@@ -130,4 +136,4 @@ tested, works on every runtime.
    answer, and what signal does it use?
 3. Why can't we compare a Voyage vector with an OpenAI vector, even at 1024 dimensions?
 4. In RRF, what happens to a chunk that only one of the two searches found?
-5. What stops someone with the public anon key from reading `assistant.chunks` directly?
+5. What stops someone with the public anon key from reading `kb_chunks` directly? (Two things.)

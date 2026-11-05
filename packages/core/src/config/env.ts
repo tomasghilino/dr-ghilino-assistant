@@ -57,7 +57,7 @@ const retrievalSchema = z.object({
   RETRIEVAL_MAX_CONTEXT_TOKENS: positiveInt(2_000, 8_000),
 });
 
-const databaseSchema = z.object({
+export const databaseConfigSchema = z.object({
   INSFORGE_BASE_URL: z.url(),
   /** Admin key (ik_...). Server-side only: bypasses RLS. */
   INSFORGE_API_KEY: z.string().min(1),
@@ -102,7 +102,7 @@ export const serverConfigSchema = z
   .and(llmSchema)
   .and(embeddingsSchema)
   .and(retrievalSchema)
-  .and(databaseSchema)
+  .and(databaseConfigSchema)
   .and(httpSchema)
   .and(sessionSchema)
   .and(safetySchema);
@@ -117,7 +117,7 @@ export const ingestConfigSchema = z
       .default("DrGhilinoAssistantIngest/0.1 (+https://drluisghilino.com.ar)"),
   })
   .and(embeddingsSchema)
-  .and(databaseSchema);
+  .and(databaseConfigSchema);
 
 export type ServerConfig = z.infer<typeof serverConfigSchema>;
 export type IngestConfig = z.infer<typeof ingestConfigSchema>;
