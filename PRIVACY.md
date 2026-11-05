@@ -50,8 +50,11 @@ deletes them within 30 days at most, except content flagged for safety review or
 **Voyage AI (MongoDB), embeddings.** MongoDB's docs say it "can collect the data that you send to
 the Atlas Embedding and Reranking API and use it to improve Voyage AI models" and that the setting
 is managed per organization ([model training data](https://www.mongodb.com/docs/voyageai/management/model-training-data/)).
-**Before production, the account owner must turn this off** and record the date here. Only the
-visitor's question (after redaction) is sent, not the conversation.
+**Turned off on 2026-11-05** by the account owner: Organization Settings → "Help Improve Voyage AI
+Models" = Off. The toggle only appears once a valid payment method is on file, so a card is required
+for the opt-out even though usage stays inside the free tokens. Re-check the setting before launch and
+after any change to the Atlas organization. Only the visitor's question (after redaction) is sent, not
+the conversation. A project-level rate limit in Atlas caps the damage if the key ever leaks.
 
 **InsForge** hosts the function and the database. Function logs are InsForge's; our code does not
 write message content to them.
