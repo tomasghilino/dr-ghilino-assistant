@@ -3,3 +3,8 @@ packages:
   - "apps/*"
 allowBuilds:
   esbuild: true
+overrides:
+  # GHSA-mrhx-c7xc-m3w5: @insforge/shared-schemas pins zod ^3, every 3.x is affected and only
+  # 4.6.6+ is patched. The SDK imports it only for its auth module; zod 4 builds those schemas fine
+  # (checked with pnpm test:live). Remove when shared-schemas moves to zod 4.
+  "@insforge/shared-schemas>zod": "4.6.7"

@@ -1,6 +1,14 @@
 import { existsSync } from "node:fs";
 import { parseArgs } from "node:util";
-import { ConfigError, ingestConfigSchema, parseConfig, serverConfigSchema } from "@ghilino/core";
+import {
+  ConfigError,
+  databaseConfigSchema,
+  InsforgeRpcClient,
+  ingestConfigSchema,
+  parseConfig,
+  serverConfigSchema,
+} from "@ghilino/core";
+import { createAdminClient } from "@insforge/sdk";
 
 /**
  * Admin CLI. Runs on a developer's machine or in CI, never in the public API.
@@ -25,6 +33,22 @@ const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promi
         }
       }
       return failures === 0 ? 0 : 1;
+    },
+  },
+  "db:status": {
+    summary: "Call assistant_status() on InsForge with the admin key (counts only, no content)",
+    run: async () => {
+      const config = parseConfig(databaseConfigSchema, process.env);
+      const rpc = new InsforgeRpcClient(
+        createAdminClient({
+          baseUrl: config.INSFORGE_BASE_URL,
+          apiKey: config.INSFORGE_API_KEY,
+          timeout: 10_000,
+          retryCount: 1,
+        }),
+      );
+      console.log(JSON.stringify(await rpc.value("assistant_status"), null, 2));
+      return 0;
     },
   },
 };
