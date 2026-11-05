@@ -1,6 +1,6 @@
 # ADR 0003: Voyage `voyage-4` embeddings, 1024 dimensions, behind a port
 
-Date: 2026-11-05 · Status: proposed (needs the account decision)
+Date: 2026-11-05 · Status: accepted (2026-11-05: account created, training opt-out on, key tested)
 
 ## Context
 
@@ -24,5 +24,11 @@ compares vectors from the configured model, and switching models means re-indexi
 
 ## Consequences
 
-Costs round to zero (well inside the free tokens). On InsForge's Free plan the AI gateway is disabled, so Voyage is also the only option here that costs nothing. The account owner must turn off "use data to
-improve models" in MongoDB Atlas, and add a payment method to leave the low free-trial rate limits.
+Costs round to zero (well inside the free tokens). On InsForge's Free plan the AI gateway is disabled, so Voyage is also the only option here that costs nothing. The account owner must keep "Help Improve Voyage AI Models" off in MongoDB Atlas, which requires a
+payment method on file (it also lifts the free-trial rate limits).
+
+First live call (2026-11-05, from Buenos Aires): `voyage-4` returned unit-length 1024-d vectors in
+about 330 ms for one query, so cosine similarity equals the dot product. "¿cuánto sale la consulta?"
+scored 0.668 against "Valor de la consulta: $50.000." and 0.244 against the San Miguel office text.
+The REST endpoint is `https://ai.mongodb.com/v1/embeddings`; the `voyageai` npm client defaults to the
+old `api.voyageai.com` and needs `environment: "https://ai.mongodb.com/v1"`.
