@@ -1,0 +1,11 @@
+{
+  // Production code: web-standard APIs only. "types": [] keeps Node globals (process, Buffer)
+  // out, so an accidental Node dependency fails the type check instead of failing on Deno.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM"],
+    "types": []
+  },
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
+}

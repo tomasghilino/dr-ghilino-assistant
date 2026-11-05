@@ -1,0 +1,19 @@
+{
+  "name": "@ghilino/api",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/app.ts"
+  },
+  "scripts": {
+    "dev": "tsx watch src/node.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ghilino/core": "workspace:*",
+    "hono": "4.13.16"
+  },
+  "devDependencies": {
+    "@hono/node-server": "2.1.6"
+  }
+}

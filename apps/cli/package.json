@@ -1,0 +1,14 @@
+{
+  "name": "@ghilino/cli",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ghilino": "./src/main.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@ghilino/core": "workspace:*"
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.tmp/
+coverage/
+test-results/
+playwright-report/
+*.log
+.env
+.env.*
+!.env.example
+.insforge/
+.DS_Store
