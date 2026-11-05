@@ -8,7 +8,8 @@
       "!**/.tmp",
       "!**/test-results",
       "!**/playwright-report",
-      "!**/test/fixtures"
+      "!**/test/fixtures",
+      "!evals/reports"
     ]
   },
   "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },

@@ -53,12 +53,28 @@ const embeddingsSchema = z
     }
   });
 
-const retrievalSchema = z.object({
+export const retrievalConfigSchema = z.object({
+  /** Chunks handed to the model after fusion, deduplication and the token budget. */
   RETRIEVAL_TOP_K: positiveInt(5, 20),
+  /** How deep the semantic and the lexical lists go before Reciprocal Rank Fusion. */
   RETRIEVAL_CANDIDATES: positiveInt(20, 100),
   RETRIEVAL_RRF_K: positiveInt(60, 1000),
+  /**
+   * Confidence gate (ADR 0011): below this best cosine similarity the assistant abstains instead
+   * of answering. Tuned with `pnpm cli eval:retrieval`; see EVALUATION.md for the measurements.
+   */
   RETRIEVAL_MIN_SIMILARITY: z.coerce.number().min(0).max(1).default(0.35),
+  /**
+   * Second way through the gate: the share of the question's terms that one chunk must contain.
+   * 1 means all of them, which rescues identifiers ("virrey vertiz 117") that embeddings miss.
+   */
+  RETRIEVAL_MIN_LEXICAL_COVERAGE: z.coerce.number().min(0.5).max(1).default(1),
   RETRIEVAL_MAX_CONTEXT_TOKENS: positiveInt(2_000, 8_000),
+  /** A result whose word 3-grams are this much inside a better-ranked result is dropped. */
+  RETRIEVAL_DEDUPE_THRESHOLD: z.coerce.number().min(0.5).max(1).default(0.8),
+  /** In-memory cache of query embeddings, per function instance. */
+  RETRIEVAL_QUERY_CACHE_SIZE: z.coerce.number().int().min(0).max(10_000).default(256),
+  RETRIEVAL_QUERY_CACHE_TTL_MS: positiveInt(600_000, 86_400_000),
 });
 
 export const databaseConfigSchema = z.object({
@@ -105,7 +121,7 @@ export const serverConfigSchema = z
   .object({ APP_ENV: z.enum(["development", "test", "production"]).default("development") })
   .and(llmSchema)
   .and(embeddingsSchema)
-  .and(retrievalSchema)
+  .and(retrievalConfigSchema)
   .and(databaseConfigSchema)
   .and(httpSchema)
   .and(sessionSchema)
@@ -130,7 +146,14 @@ export const ingestConfigSchema = ingestionSettingsSchema
   .and(embeddingsSchema)
   .and(databaseConfigSchema);
 
+/** What `pnpm cli search` and `pnpm cli eval:retrieval` need: no LLM key, no HTTP secrets. */
+export const retrievalCliConfigSchema = retrievalConfigSchema
+  .and(embeddingsSchema)
+  .and(databaseConfigSchema);
+
 export type ServerConfig = z.infer<typeof serverConfigSchema>;
+export type RetrievalConfig = z.infer<typeof retrievalConfigSchema>;
+export type RetrievalCliConfig = z.infer<typeof retrievalCliConfigSchema>;
 export type IngestConfig = z.infer<typeof ingestConfigSchema>;
 export type IngestionSettings = z.infer<typeof ingestionSettingsSchema>;
 

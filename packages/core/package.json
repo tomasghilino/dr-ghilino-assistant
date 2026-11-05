@@ -5,6 +5,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./ingestion": "./src/ingestion/index.ts",
+    "./evaluation": "./src/evaluation/index.ts",
     "./testing": "./test/support/index.ts"
   },
   "scripts": {

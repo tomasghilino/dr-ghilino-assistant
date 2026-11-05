@@ -1,4 +1,4 @@
-import { foldForSearch } from "../lib/text.ts";
+import { bodyShingles, containment } from "../lib/shingles.ts";
 import type { ChunkDraft } from "./types.ts";
 
 export interface DedupeInput {
@@ -55,10 +55,8 @@ export function dedupeChunks(items: DedupeInput[], threshold: number): DedupeDec
     }
     seenHashes.add(item.contentHash);
 
-    const shingles = shinglesOf(item.chunk.content);
-    let inside = 0;
-    for (const shingle of shingles) if (covered.has(shingle)) inside++;
-    decision.containment = shingles.size === 0 ? 0 : inside / shingles.size;
+    const shingles = bodyShingles(item.chunk.content);
+    decision.containment = containment(shingles, covered);
     if (shingles.size > 0 && decision.containment >= threshold) {
       decision.keep = false;
       decision.reason = "near_duplicate";
@@ -67,17 +65,4 @@ export function dedupeChunks(items: DedupeInput[], threshold: number): DedupeDec
     pending.push(shingles);
   }
   return decisions;
-}
-
-/** Word 3-grams of the chunk body (the first line is the heading path), accent-folded. */
-function shinglesOf(content: string): Set<string> {
-  const body = foldForSearch(content.split("\n").slice(1).join(" "));
-  const words = body.match(/[\p{L}\p{N}$]+/gu) ?? [];
-  const shingles = new Set<string>();
-  if (words.length < 3) {
-    if (words.length > 0) shingles.add(words.join(" "));
-    return shingles;
-  }
-  for (let i = 0; i + 3 <= words.length; i++) shingles.add(words.slice(i, i + 3).join(" "));
-  return shingles;
 }

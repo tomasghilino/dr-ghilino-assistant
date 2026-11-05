@@ -34,10 +34,23 @@ describe.skipIf(!LIVE)("InsForge project (live)", () => {
 
   it("anon key: cannot call our SQL functions", async () => {
     const anon = createClient({ baseUrl, anonKey, timeout: 10_000 });
-    const { data, error } = await anon.database.rpc("assistant_status");
-    expect(data).toBeNull();
-    // 42501 = insufficient_privilege: denied by Postgres, not a network or routing failure.
-    expect(error?.code).toBe(PERMISSION_DENIED);
+    const calls: Array<[string, Record<string, unknown>]> = [
+      ["assistant_status", {}],
+      [
+        "kb_hybrid_search",
+        {
+          p_query_embedding: `[${new Array(1024).fill(0).join(",")}]`,
+          p_query_text: "consulta",
+          p_embedding_model: "voyage-4",
+        },
+      ],
+    ];
+    for (const [fn, args] of calls) {
+      const { data, error } = await anon.database.rpc(fn, args);
+      expect(data, fn).toBeNull();
+      // 42501 = insufficient_privilege: denied by Postgres, not a network or routing failure.
+      expect(error?.code, fn).toBe(PERMISSION_DENIED);
+    }
   });
 
   it("anon key: cannot read or write any app table", async () => {

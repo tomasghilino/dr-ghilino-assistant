@@ -17,8 +17,8 @@ embeddings for search.
 | 0. Discovery and planning | done    | [Architecture](ARCHITECTURE.md), [ADRs](docs/adr), [knowledge inventory](docs/knowledge-inventory.md) |
 | 1. Foundation             | done    | Workspace, config, schema on InsForge, PGlite and live tests; see [DEPLOYMENT.md](DEPLOYMENT.md)      |
 | 2. Knowledge ingestion    | done    | 25 chunks + clinic profile on InsForge; see [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md)                    |
-| 3. Retrieval engine       | next    |                                                                                                       |
-| 4. Agent                  | planned |                                                                                                       |
+| 3. Retrieval engine       | done    | Hybrid search + two-signal gate on InsForge; Recall@5 100%, see [EVALUATION.md](EVALUATION.md)        |
+| 4. Agent                  | next    |                                                                                                       |
 | 5. Backend API            | planned |                                                                                                       |
 | 6. Widget                 | planned |                                                                                                       |
 | 7. Testing and evaluation | planned |                                                                                                       |
@@ -32,7 +32,8 @@ embeddings for search.
    personal data and catches emergencies before any model call.
 3. Claude decides which read-only tool it needs (`search_knowledge`, `get_clinic_information`,
    `get_contact_information`, `get_appointment_information`). Search is hybrid (pgvector + Spanish
-   full-text, fused with Reciprocal Rank Fusion) and abstains below a similarity threshold.
+   full-text, fused with Reciprocal Rank Fusion) and abstains unless the best match is close in
+   meaning or contains every word of the question.
 4. The answer comes back as a validated object (text, cited sources, kind). The server checks the
    citations and links before it reaches the visitor.
 
@@ -58,4 +59,5 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the layout and conventions.
 - [DEVELOPMENT.md](DEVELOPMENT.md): setup and conventions
 - [DEPLOYMENT.md](DEPLOYMENT.md): the InsForge project, credentials, migrations
 - [docs/learning](docs/learning): notes that explain the AI engineering concepts phase by phase
-- Coming with their phases: SECURITY.md, EVALUATION.md, API docs
+- [EVALUATION.md](EVALUATION.md): retrieval evaluation, metrics and measured results
+- Coming with their phases: SECURITY.md, API docs
