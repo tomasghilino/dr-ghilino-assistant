@@ -15,17 +15,20 @@ pnpm cli config:check         # lists missing or invalid variables by name
 
 ## Everyday commands
 
-| Command                 | What it does                                                                       |
-| ----------------------- | ---------------------------------------------------------------------------------- |
-| `pnpm verify`           | Lint, type check and all tests. Run before every push.                             |
-| `pnpm test:unit`        | Pure functions, fast.                                                              |
-| `pnpm test:integration` | Real SQL on PGlite with every migration applied, HTTP via Hono.                    |
-| `pnpm test:live`        | Opt-in checks against the real InsForge project (needs `.env.local`). Never in CI. |
-| `pnpm typecheck`        | `tsc` per package (TypeScript 7).                                                  |
-| `pnpm lint` / `format`  | Biome.                                                                             |
-| `pnpm dev:api`          | Local API on http://localhost:8787 (health only in Phase 1).                       |
-| `pnpm cli <command>`    | Admin CLI. `pnpm cli` lists the commands.                                          |
-| `pnpm cli db:status`    | Admin-key health probe of the InsForge database (counts only).                     |
+| Command                     | What it does                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------- |
+| `pnpm verify`               | Lint, type check and all tests. Run before every push.                             |
+| `pnpm test:unit`            | Pure functions, fast.                                                              |
+| `pnpm test:integration`     | Real SQL on PGlite with every migration applied, HTTP via Hono.                    |
+| `pnpm test:live`            | Opt-in checks against the real InsForge project (needs `.env.local`). Never in CI. |
+| `pnpm typecheck`            | `tsc` per package (TypeScript 7).                                                  |
+| `pnpm lint` / `format`      | Biome.                                                                             |
+| `pnpm dev:api`              | Local API on http://localhost:8787 (health only in Phase 1).                       |
+| `pnpm cli <command>`        | Admin CLI. `pnpm cli` lists the commands.                                          |
+| `pnpm cli db:status`        | Admin-key health probe of the InsForge database (counts only).                     |
+| `pnpm cli ingest --dry-run` | Fetch, extract, chunk and dedupe the sources; print the chunks. No writes.         |
+| `pnpm cli ingest`           | Index the knowledge base (see KNOWLEDGE_BASE.md).                                  |
+| `pnpm cli kb:list`          | Published documents, versions and chunk counts.                                    |
 
 ## Layout
 
@@ -34,11 +37,15 @@ packages/core     Runtime-agnostic domain and application code (no Node/Deno API
   src/config      Environment schema (zod). The only place that knows variable names.
   src/db          RpcClient port: every database call is a SQL function (ADR 0005)
   src/domain      Shared types
-  src/lib         Hashing, text normalisation, errors
-  test/support    PGlite test database with the real migrations
+  src/embeddings  EmbeddingProvider port, Voyage and OpenAI-compatible adapters
+  src/ingestion   Admin-only pipeline (subpath @ghilino/core/ingestion, never in the API bundle)
+  src/lib         Hashing, text normalisation, stable JSON, errors
+  test/support    PGlite test database, offline hashing embedder, site fixtures, fake fetch
+  test/fixtures   Snapshots of the live site (2026-11-05)
 apps/api          HTTP adapter (Hono). Node entry now; InsForge (Deno) entry in Phase 5
 apps/cli          Admin commands (ingest, eval, ops), Node only
 migrations/       SQL migrations (InsForge CLI format: <14-digit version>_<name>.sql)
+knowledge/        sources.json: the allowlist of what the assistant may learn from
 docs/             Knowledge inventory, ADRs, learning notes
 ```
 

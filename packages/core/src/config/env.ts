@@ -33,7 +33,11 @@ const embeddingsSchema = z
     EMBEDDINGS_PROVIDER: z.enum(["voyage", "openai-compatible"]).default("voyage"),
     EMBEDDINGS_MODEL: z.string().min(1).default("voyage-4"),
     EMBEDDINGS_TIMEOUT_MS: positiveInt(8_000, 30_000),
+    EMBEDDINGS_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(3),
+    EMBEDDINGS_BATCH_SIZE: positiveInt(64, 128),
     VOYAGE_API_KEY: z.string().min(1).optional(),
+    /** Keys created in MongoDB Atlas use this host; legacy Voyage keys used api.voyageai.com. */
+    VOYAGE_BASE_URL: z.url().default("https://ai.mongodb.com/v1"),
     OPENAI_COMPATIBLE_BASE_URL: z.url().optional(),
     OPENAI_COMPATIBLE_API_KEY: z.string().min(1).optional(),
   })
@@ -107,20 +111,28 @@ export const serverConfigSchema = z
   .and(sessionSchema)
   .and(safetySchema);
 
-export const ingestConfigSchema = z
-  .object({
-    CHUNK_TARGET_TOKENS: positiveInt(220, 1_000),
-    CHUNK_MAX_TOKENS: positiveInt(400, 2_000),
-    CHUNK_OVERLAP_TOKENS: z.coerce.number().int().min(0).max(200).default(40),
-    INGEST_USER_AGENT: z
-      .string()
-      .default("DrGhilinoAssistantIngest/0.1 (+https://drluisghilino.com.ar)"),
-  })
+/** Ingestion settings that need no credentials (enough for a dry run). */
+export const ingestionSettingsSchema = z.object({
+  CHUNK_TARGET_TOKENS: positiveInt(220, 1_000),
+  CHUNK_MAX_TOKENS: positiveInt(400, 2_000),
+  CHUNK_OVERLAP_TOKENS: z.coerce.number().int().min(0).max(200).default(40),
+  INGEST_USER_AGENT: z
+    .string()
+    .default("DrGhilinoAssistantIngest/0.1 (+https://drluisghilino.com.ar)"),
+  INGEST_SOURCES_FILE: z.string().min(1).default("knowledge/sources.json"),
+  INGEST_FETCH_TIMEOUT_MS: positiveInt(15_000, 60_000),
+  INGEST_MAX_BYTES: positiveInt(2_000_000, 20_000_000),
+  /** Share of a chunk already covered by more authoritative sources at which it is dropped. */
+  DEDUPE_CONTAINMENT_THRESHOLD: z.coerce.number().min(0.5).max(1).default(0.8),
+});
+
+export const ingestConfigSchema = ingestionSettingsSchema
   .and(embeddingsSchema)
   .and(databaseConfigSchema);
 
 export type ServerConfig = z.infer<typeof serverConfigSchema>;
 export type IngestConfig = z.infer<typeof ingestConfigSchema>;
+export type IngestionSettings = z.infer<typeof ingestionSettingsSchema>;
 
 export type EnvSource = Record<string, string | undefined>;
 

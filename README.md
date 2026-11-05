@@ -16,13 +16,13 @@ embeddings for search.
 | ------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
 | 0. Discovery and planning | done    | [Architecture](ARCHITECTURE.md), [ADRs](docs/adr), [knowledge inventory](docs/knowledge-inventory.md) |
 | 1. Foundation             | done    | Workspace, config, schema on InsForge, PGlite and live tests; see [DEPLOYMENT.md](DEPLOYMENT.md)      |
-| 2. Knowledge ingestion    | next    |                                                                                                       |
-| 3. Retrieval engine       | planned |                                                                                                       |
+| 2. Knowledge ingestion    | done    | 25 chunks + clinic profile on InsForge; see [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md)                    |
+| 3. Retrieval engine       | next    |                                                                                                       |
 | 4. Agent                  | planned |                                                                                                       |
 | 5. Backend API            | planned |                                                                                                       |
 | 6. Widget                 | planned |                                                                                                       |
 | 7. Testing and evaluation | planned |                                                                                                       |
-| 8. Deployment             | planned | Only the database schema is on InsForge; no public endpoint yet.                                      |
+| 8. Deployment             | planned | Schema and knowledge base are on InsForge; no public endpoint yet.                                    |
 
 ## How it works (short version)
 
@@ -53,8 +53,9 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the layout and conventions.
 - [ARCHITECTURE.md](ARCHITECTURE.md): components, request lifecycle, data model, risks
 - [docs/adr](docs/adr): architecture decision records
 - [docs/knowledge-inventory.md](docs/knowledge-inventory.md): sources, facts, gaps
+- [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md): ingestion pipeline and administrator tasks
 - [PRIVACY.md](PRIVACY.md): data flows and third-party terms
 - [DEVELOPMENT.md](DEVELOPMENT.md): setup and conventions
 - [DEPLOYMENT.md](DEPLOYMENT.md): the InsForge project, credentials, migrations
 - [docs/learning](docs/learning): notes that explain the AI engineering concepts phase by phase
-- Coming with their phases: SECURITY.md, KNOWLEDGE_BASE.md, EVALUATION.md, API docs
+- Coming with their phases: SECURITY.md, EVALUATION.md, API docs

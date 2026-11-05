@@ -9,10 +9,11 @@ import {
   serverConfigSchema,
 } from "@ghilino/core";
 import { createAdminClient } from "@insforge/sdk";
+import { ingestCommand, kbListCommand } from "./commands/ingest.ts";
 
 /**
  * Admin CLI. Runs on a developer's machine or in CI, never in the public API.
- * Commands are added phase by phase: ingest (2), eval:retrieval (3), eval:agent (7), ops:report (7).
+ * Commands are added phase by phase: eval:retrieval (3), eval:agent (7) and ops:report (7) are next.
  */
 const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promise<number> }> = {
   "config:check": {
@@ -35,6 +36,14 @@ const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promi
       return failures === 0 ? 0 : 1;
     },
   },
+  ingest: {
+    summary: "Index the sources in knowledge/sources.json (--dry-run, --force, --source <id>)",
+    run: ingestCommand,
+  },
+  "kb:list": {
+    summary: "List published documents, versions and chunk counts (no content)",
+    run: kbListCommand,
+  },
   "db:status": {
     summary: "Call assistant_status() on InsForge with the admin key (counts only, no content)",
     run: async () => {
@@ -55,7 +64,8 @@ const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promi
 
 async function main(argv: string[]): Promise<number> {
   const { positionals } = parseArgs({ args: argv, allowPositionals: true, strict: false });
-  const [name, ...rest] = positionals;
+  const [name] = positionals;
+  const rest = argv.slice(argv.indexOf(name ?? "") + 1);
   const command = name ? COMMANDS[name] : undefined;
   if (!command) {
     console.log("Usage: pnpm cli <command>\n");

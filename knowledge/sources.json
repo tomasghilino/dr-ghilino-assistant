@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "id": "site-home",
+      "url": "https://drluisghilino.com.ar/",
+      "kind": "html_page",
+      "priority": 0,
+      "description": "Home page of the doctor's site: every section, plus its schema.org data",
+      "html": { "root": "main", "exclude": [], "clinicProfile": true }
+    },
+    {
+      "id": "site-llms",
+      "url": "https://drluisghilino.com.ar/llms.txt",
+      "kind": "markdown",
+      "priority": 10,
+      "description": "Markdown summary of the same site; chunks already covered by site-home are dropped",
+      "citeAs": "https://drluisghilino.com.ar/",
+      "markdown": { "excludeHeadings": ["Secciones del sitio"] }
+    }
+  ]
+}

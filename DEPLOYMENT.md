@@ -1,7 +1,8 @@
 # Deployment
 
-Status: **database only.** The InsForge project exists and the schema is applied. Nothing public
-is deployed yet: no edge function, no widget, no secrets for Anthropic or Voyage. This file grows
+Status: **database and knowledge base only.** The schema is applied and the knowledge base is
+indexed (25 chunks, clinic profile). Nothing public is deployed yet: no edge function, no widget,
+no function secrets. This file grows
 with Phases 5, 6 and 8.
 
 ## InsForge project
@@ -55,9 +56,10 @@ Never edit a migration after it is applied; write a new one.
 
 ### Applied
 
-| Version          | Name          | Applied              |
-| ---------------- | ------------- | -------------------- |
-| `20261105192937` | `init-schema` | 2026-11-05 19:31 UTC |
+| Version          | Name                     | Applied              |
+| ---------------- | ------------------------ | -------------------- |
+| `20261105192937` | `init-schema`            | 2026-11-05 19:31 UTC |
+| `20261105204859` | `kb-ingestion-functions` | 2026-11-05 21:02 UTC |
 
 ## Health check
 
