@@ -10,12 +10,12 @@ import {
 } from "@ghilino/core";
 import { createAdminClient } from "@insforge/sdk";
 import { askCommand, chatCommand } from "./commands/agent.ts";
+import { evalAgentCommand } from "./commands/agent-eval.ts";
 import { ingestCommand, kbListCommand } from "./commands/ingest.ts";
 import { evalRetrievalCommand, searchCommand } from "./commands/retrieval.ts";
 
 /**
  * Admin CLI. Runs on a developer's machine or in CI, never in the public API.
- * Commands are added phase by phase: eval:agent (7) is next.
  */
 const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promise<number> }> = {
   "config:check": {
@@ -61,6 +61,10 @@ const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promi
   chat: {
     summary: "Talk to the real assistant in the terminal (memory-only session)",
     run: chatCommand,
+  },
+  "eval:agent": {
+    summary: "Run evals/agent-cases.json through the real assistant and grade it (checks + judge)",
+    run: evalAgentCommand,
   },
   "ops:report": {
     summary:

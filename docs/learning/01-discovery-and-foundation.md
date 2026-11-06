@@ -53,6 +53,7 @@ section):
 - **Abstention.** A retrieval score gives a measurable signal ("nothing relevant found") to say "no
   sé" instead of improvising.
 - **Measurement.** Phase 7 runs a full-context baseline next to RAG, so the trade-off is a number.
+  (It did: same quality, one second faster, cheaper only when traffic is busy; see ADR 0015.)
 
 ## 4. Embeddings and vector similarity
 

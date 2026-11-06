@@ -12,17 +12,17 @@ embeddings for search.
 
 ## Status
 
-| Phase                     | State   | Notes                                                                                                        |
-| ------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
-| 0. Discovery and planning | done    | [Architecture](ARCHITECTURE.md), [ADRs](docs/adr), [knowledge inventory](docs/knowledge-inventory.md)        |
-| 1. Foundation             | done    | Workspace, config, schema on InsForge, PGlite and live tests; see [DEPLOYMENT.md](DEPLOYMENT.md)             |
-| 2. Knowledge ingestion    | done    | 25 chunks + clinic profile on InsForge; see [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md)                           |
-| 3. Retrieval engine       | done    | Hybrid search + two-signal gate on InsForge; Recall@5 100%, see [EVALUATION.md](EVALUATION.md)               |
-| 4. Agent                  | done    | Claude Haiku 5.5, four read-only tools, JSON answer, four safety layers; `pnpm cli chat`                     |
-| 5. Backend API            | done    | Hono API: CORS, limits, budget, encrypted sessions, metrics; bundle runs on Deno; [docs/api.md](docs/api.md) |
-| 6. Widget                 | done    | 18 KiB, Shadow DOM, text-only rendering, accessible; 10 Chromium e2e tests; [docs/widget.md](docs/widget.md) |
-| 7. Testing and evaluation | next    |                                                                                                              |
-| 8. Deployment             | planned | Schema and knowledge base are on InsForge; no public endpoint yet.                                           |
+| Phase                     | State   | Notes                                                                                                                         |
+| ------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 0. Discovery and planning | done    | [Architecture](ARCHITECTURE.md), [ADRs](docs/adr), [knowledge inventory](docs/knowledge-inventory.md)                         |
+| 1. Foundation             | done    | Workspace, config, schema on InsForge, PGlite and live tests; see [DEPLOYMENT.md](DEPLOYMENT.md)                              |
+| 2. Knowledge ingestion    | done    | 25 chunks + clinic profile on InsForge; see [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md)                                            |
+| 3. Retrieval engine       | done    | Hybrid search + two-signal gate on InsForge; Recall@5 100%, see [EVALUATION.md](EVALUATION.md)                                |
+| 4. Agent                  | done    | Claude Haiku 5.5, four read-only tools, JSON answer, four safety layers; `pnpm cli chat`                                      |
+| 5. Backend API            | done    | Hono API: CORS, limits, budget, encrypted sessions, metrics; bundle runs on Deno; [docs/api.md](docs/api.md)                  |
+| 6. Widget                 | done    | 18 KiB, Shadow DOM, text-only rendering, accessible; 10 Chromium e2e tests; [docs/widget.md](docs/widget.md)                  |
+| 7. Testing and evaluation | done    | 42-conversation agent evaluation with a faithfulness judge; RAG vs whole-site prompt measured; [EVALUATION.md](EVALUATION.md) |
+| 8. Deployment             | planned | Schema and knowledge base are on InsForge; no public endpoint yet.                                                            |
 
 <p><img src="docs/img/widget-mobile.png" alt="The assistant on a phone, answering that the site does not say whether the doctor works with OSDE and offering WhatsApp" width="300"></p>
 
@@ -61,7 +61,7 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the layout and conventions.
 - [DEVELOPMENT.md](DEVELOPMENT.md): setup and conventions
 - [DEPLOYMENT.md](DEPLOYMENT.md): the InsForge project, credentials, migrations
 - [docs/learning](docs/learning): notes that explain the AI engineering concepts phase by phase
-- [EVALUATION.md](EVALUATION.md): retrieval evaluation, metrics and measured results
+- [EVALUATION.md](EVALUATION.md): retrieval and agent evaluations, measured results, the test suite
 - [SECURITY.md](SECURITY.md): threats, controls and known limitations
 - [docs/api.md](docs/api.md): HTTP API reference
 - [docs/widget.md](docs/widget.md): install the widget, what it guarantees

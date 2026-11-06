@@ -61,12 +61,16 @@ export class AnthropicProvider implements LlmProvider {
           max_tokens: request.maxTokens,
           system,
           messages: request.messages.map(toMessageParam),
-          tools: request.tools.map((tool) => ({
-            name: tool.name,
-            description: tool.description,
-            input_schema: tool.inputSchema,
-            strict: true,
-          })),
+          ...(request.tools.length > 0
+            ? {
+                tools: request.tools.map((tool) => ({
+                  name: tool.name,
+                  description: tool.description,
+                  input_schema: tool.inputSchema,
+                  strict: true,
+                })),
+              }
+            : {}),
           thinking: { type: "adaptive" },
           output_config: {
             effort: this.effort,

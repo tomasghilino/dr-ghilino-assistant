@@ -31,6 +31,7 @@ pnpm cli config:check         # lists missing or invalid variables by name
 | `pnpm cli kb:list`                    | Published documents, versions and chunk counts.                                                  |
 | `pnpm cli search "<q>"`               | How one question is ranked and gated; `--context` prints what the model would read.              |
 | `pnpm cli eval:retrieval`             | Run the retrieval evaluation and write a report (see EVALUATION.md).                             |
+| `pnpm cli eval:agent`                 | Run the agent evaluation (real Claude, judge model) and write a report (see EVALUATION.md).      |
 | `pnpm cli ask "<q>"`                  | One question through the real assistant: answer, sources, tools, tokens, cost.                   |
 | `pnpm cli chat`                       | A conversation with the real assistant in the terminal (memory-only session).                    |
 | `pnpm cli ops:report`                 | Requests, outcomes, kinds, latency, tokens and cost from `request_metrics`.                      |

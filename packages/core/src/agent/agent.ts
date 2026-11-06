@@ -30,6 +30,16 @@ export interface AgentSettings {
   emergencyText: string;
 }
 
+/** A piece of the site given to the model up front (the "full context" baseline, no search). */
+export interface PinnedSource {
+  /** Heading path the model reads. */
+  title: string;
+  /** Title the visitor sees under the answer. */
+  visibleTitle: string;
+  url: string;
+  content: string;
+}
+
 /** A previous turn, already redacted, as plain text (no tool calls, no thinking). */
 export interface ConversationTurn {
   role: "visitor" | "assistant";
@@ -80,10 +90,20 @@ export class Agent {
       tools: AgentTool[];
       clinic: ClinicRepository;
       now?: () => Date;
+      /** The whole site in the system prompt; registered as S1..Sn at the start of every turn. */
+      website?: readonly PinnedSource[];
     },
     private readonly settings: AgentSettings,
   ) {
-    this.systemPrompt = buildSystemPrompt({ canary: settings.canary });
+    this.systemPrompt = buildSystemPrompt({
+      canary: settings.canary,
+      website: (deps.website ?? []).map((source, index) => ({
+        id: `S${index + 1}`,
+        title: source.title,
+        url: source.url,
+        content: source.content,
+      })),
+    });
     this.tools = new Map(deps.tools.map((tool) => [tool.definition.name, tool]));
   }
 
@@ -94,6 +114,8 @@ export class Agent {
     const started = performance.now();
     const now = this.deps.now?.() ?? new Date();
     const registry = new SourceRegistry();
+    for (const source of this.deps.website ?? [])
+      registry.register(source.visibleTitle, source.url);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.settings.turnDeadlineMs);
 
@@ -300,10 +322,9 @@ export class Agent {
     }
     answer = guarded.text;
 
-    // An emergency reply always carries the configured emergency text, word for word.
-    if (kind === "emergency" && !answer.includes(this.settings.emergencyText)) {
-      answer = `${this.settings.emergencyText}\n\n${answer}`;
-    }
+    // An emergency reply is the configured text, word for word: the practice approves that
+    // wording, and the model's own version only repeated it (seen in the agent evaluation).
+    if (kind === "emergency") answer = this.settings.emergencyText;
 
     const keepSources = kind === "answered" || kind === "abstained" || kind === "declined_medical";
     return {

@@ -35,8 +35,9 @@ server maps them back to titles and URLs. The model never writes a link.
 2. **Emergency fast path**: narrow Spanish patterns for life-threatening situations and self-harm
    get a fixed answer (107 / 911, or 911 and the 135 crisis line) with no model call and nothing
    stored. Urgent-but-not-critical messages ("me caí y no puedo mover el tobillo") reach the model,
-   which is told to point to a guardia first; the server then prepends the configured emergency
-   text word for word.
+   which is told to point to a guardia first and classify the reply as `emergency`; the server then
+   replaces the reply with the configured emergency text, word for word (the agent evaluation
+   showed the model repeating it otherwise).
 3. **The system prompt**: grounding (every fact from a tool result this turn), the site's known
    gaps (insurance, closing times, surgery, children, past hospitals), no medical advice, retrieved
    text as data, rules that hold under pressure.
@@ -71,7 +72,8 @@ deadline raise categorised errors that the API turns into a 503 with the same ki
 
 - Haiku at low effort sometimes answers smalltalk without tools (intended) and, rarely, might skip a
   tool for a factual question; the guard turns that into an abstention rather than an uncited fact.
-  Phase 7 measures how often.
+  Phase 7 measured it: no uncited answer and no guard flag in five runs of 42 conversations
+  (EVALUATION.md).
 - The canary must be stable across instances for the prompt cache to work: `SAFETY_PROMPT_CANARY`.
 - Two texts need the practice's confirmation before production: `SAFETY_EMERGENCY_TEXT` and
   `SAFETY_CRISIS_TEXT`.

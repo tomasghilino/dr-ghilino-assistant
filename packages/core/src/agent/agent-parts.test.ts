@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ClinicProfile } from "../domain/clinic-profile.ts";
 import { parseFinalAnswer } from "./answer.ts";
 import { buildContactActions, describeHours, localPhone } from "./clinic.ts";
-import { dynamicContext } from "./prompt.ts";
+import { buildSystemPrompt, dynamicContext } from "./prompt.ts";
 import { SourceRegistry } from "./sources.ts";
 
 const PROFILE: ClinicProfile = {
@@ -123,5 +123,26 @@ describe("dynamic context", () => {
     expect(dynamicContext(new Date("2026-11-06T02:30:00Z"))).toMatch(
       /^Fecha y hora actual en Buenos Aires: jueves, 5 de noviembre de 2026,? 23:30\.$/,
     );
+  });
+});
+
+describe("system prompt", () => {
+  it("uses the search tool by default and switches the grounding rule when the site is included", () => {
+    const retrieval = buildSystemPrompt({ canary: "C" });
+    expect(retrieval).toContain("- search_knowledge:");
+    expect(retrieval).toContain("must come from a tool result in this turn");
+    expect(retrieval).not.toContain("# The website");
+
+    const fullContext = buildSystemPrompt({
+      canary: "C",
+      website: [{ id: "S1", title: "FAQ", url: "https://drluisghilino.com.ar/#faq", content: "x" }],
+    });
+    expect(fullContext).not.toContain("- search_knowledge:");
+    expect(fullContext).toContain("from the website text at the end of these instructions");
+    expect(
+      fullContext.endsWith(
+        '<source id="S1" title="FAQ" url="https://drluisghilino.com.ar/#faq">\nx\n</source>',
+      ),
+    ).toBe(true);
   });
 });

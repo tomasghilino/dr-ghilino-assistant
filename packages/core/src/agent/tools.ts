@@ -189,7 +189,7 @@ export function createAgentTools(deps: {
           ),
         ];
         const feeBody = profile.fee
-          ? `Valor de la consulta: ${profile.fee.amount}. El sitio no publica precios de prácticas ni de tratamientos, ni información sobre obras sociales o prepagas.`
+          ? `Valor de la consulta: ${profile.fee.amount}. El sitio no indica desde cuándo rige ese valor. Tampoco publica precios de prácticas ni de tratamientos, medios de pago, ni información sobre obras sociales o prepagas.`
           : "El sitio no publica el valor de la consulta.";
         blocks.push(
           sourceBlock(

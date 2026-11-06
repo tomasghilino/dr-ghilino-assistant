@@ -4,8 +4,10 @@ import { createEmbeddingProvider } from "../embeddings/factory.ts";
 import type { EmbeddingProvider } from "../embeddings/provider.ts";
 import { AnthropicProvider } from "../llm/anthropic.ts";
 import type { LlmProvider } from "../llm/types.ts";
+import { visitorTitle } from "../retrieval/context.ts";
 import { RetrievalService, retrievalSettingsFrom } from "../retrieval/service.ts";
-import { Agent, type AgentSettings } from "./agent.ts";
+import type { RetrievedChunk } from "../retrieval/types.ts";
+import { Agent, type AgentSettings, type PinnedSource } from "./agent.ts";
 import { ClinicRepository } from "./clinic.ts";
 import { createAgentTools } from "./tools.ts";
 
@@ -26,7 +28,14 @@ export interface Assistant {
  */
 export function createAssistant(
   config: AgentCliConfig,
-  deps: { rpc: RpcClient; llm?: LlmProvider; embeddings?: EmbeddingProvider; fetch?: typeof fetch },
+  deps: {
+    rpc: RpcClient;
+    llm?: LlmProvider;
+    embeddings?: EmbeddingProvider;
+    fetch?: typeof fetch;
+    /** Evaluation only: the whole site in the prompt instead of the search tool. */
+    website?: readonly PinnedSource[];
+  },
 ): Assistant {
   const embeddings =
     deps.embeddings ?? createEmbeddingProvider(config, deps.fetch ? { fetch: deps.fetch } : {});
@@ -55,12 +64,35 @@ export function createAssistant(
     allowedHosts: [...ANSWER_LINK_HOSTS],
     emergencyText: config.SAFETY_EMERGENCY_TEXT,
   };
+  const website = deps.website ?? [];
   const tools = createAgentTools({
     retrieval,
     clinic,
     maxContextTokens: config.RETRIEVAL_MAX_CONTEXT_TOKENS,
-  });
-  return { agent: new Agent({ llm, tools, clinic }, settings), retrieval, clinic, llm, settings };
+  }).filter((tool) => website.length === 0 || tool.definition.name !== "search_knowledge");
+  const agent = new Agent(
+    { llm, tools, clinic, ...(website.length > 0 ? { website } : {}) },
+    settings,
+  );
+  return { agent, retrieval, clinic, llm, settings };
+}
+
+/** Chunks as sources for the system prompt, in a stable order so the prompt cache holds. */
+export function websiteFromChunks(
+  chunks: ReadonlyArray<Pick<RetrievedChunk, "url" | "headingPath" | "title" | "content">>,
+): PinnedSource[] {
+  return [...chunks]
+    .sort(
+      (a, b) =>
+        a.url.localeCompare(b.url) ||
+        a.headingPath.join("/").localeCompare(b.headingPath.join("/")),
+    )
+    .map((chunk) => ({
+      title: chunk.headingPath.join(" › ") || chunk.title,
+      visibleTitle: visitorTitle(chunk),
+      url: chunk.url,
+      content: chunk.content,
+    }));
 }
 
 /**
