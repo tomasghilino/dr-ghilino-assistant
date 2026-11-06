@@ -1,7 +1,8 @@
 # Architecture
 
-Status: **Phase 6** (2026-11-06). Verified against the real InsForge project where marked _verified_; sections marked _to verify_ depend on InsForge
-behaviour that the docs do not state and that we check on a real project in Phase 1 or 8.
+Status: **Phases 0 to 7 built, Phase 8 prepared, nothing deployed** (2026-11-06). Verified against
+the real InsForge project where marked _verified_; what depends on a deployed function (sub-path
+routing, the client IP header, the timeout) is checked on the first deploy (DEPLOYMENT.md).
 
 ## 1. Goal and constraints
 
@@ -30,8 +31,7 @@ flowchart LR
     W["Widget<br/>widget.js, Shadow DOM"]
   end
   subgraph InsForge
-    S["Sites (CDN)<br/>widget.js"]
-    F["Edge function chat-api (Deno)<br/>HTTP adapter → core"]
+    F["Edge function chat-api (Deno)<br/>HTTP adapter → core<br/>also serves widget.js"]
     DB[("Postgres 15<br/>pgvector + Spanish FTS<br/>SQL functions (RPC)")]
     CRON["InsForge schedules<br/>cleanup calls"]
     SEC["Secrets"]
@@ -41,8 +41,8 @@ flowchart LR
   CLI["Admin CLI (Node)<br/>ingest · eval · ops"]
   SITE["Public site HTML + JSON-LD"]
 
-  S -- "script tag" --> W
-  W -- "POST /chat (JSON)" --> F
+  F -- "GET /widget.js (script tag)" --> W
+  W -- "POST /v1/chat (JSON)" --> F
   F -- "rpc()" --> DB
   F --> A
   F --> E
@@ -55,7 +55,7 @@ flowchart LR
 
 | #   | Component                                              | Where it runs                                               | Responsibility                                                                                                            |
 | --- | ------------------------------------------------------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Widget** (`apps/widget`)                             | Visitor's browser, served by InsForge Sites                 | UI only. Holds no secrets, renders model output as text (never as HTML).                                                  |
+| 1   | **Widget** (`apps/widget`)                             | Visitor's browser, served by the `chat-api` function        | UI only. Holds no secrets, renders model output as text (never as HTML).                                                  |
 | 2   | **HTTP adapter** (`apps/api`)                          | InsForge edge function (Deno); Node for local dev and tests | Routing, CORS, origin check, size limits, rate limiting, structured errors, wiring (composition root). No business logic. |
 | 3   | **Agent orchestration** (`packages/core/agent`)        | Inside the function                                         | The tool-use loop, system prompt, conversation context, final-answer validation.                                          |
 | 4   | **LLM provider** (`packages/core/llm`)                 | Inside the function                                         | `LlmProvider` port with neutral types; `AnthropicProvider` adapter (timeouts, retries, usage, cost).                      |
@@ -81,9 +81,9 @@ sequenceDiagram
   participant L as Claude
   participant T as Tools
   participant DB as Postgres
-  W->>H: POST /chat {sessionId?, message}
+  W->>H: POST /v1/chat {conversationId?, message}
   H->>H: origin, size, schema check
-  H->>DB: rate_limit_hit(ip_hash), budget check
+  H->>DB: rl_hit(hmac(ip)), budget check
   H->>G: input guard (length, PII redaction, emergency fast path)
   G-->>W: emergency → fixed safe answer (no LLM call)
   H->>DB: load + decrypt session (if any)
@@ -98,7 +98,7 @@ sequenceDiagram
   AG->>G: output guard (citations ⊆ retrieved, URL allowlist, canary)
   AG-->>H: answer + sources + usage
   H->>DB: save encrypted session, insert metrics row (no content)
-  H-->>W: {answer, sources, kind, sessionId}
+  H-->>W: {answer, sources, kind, actions, conversationId}
 ```
 
 The model decides whether to call a tool ("agentic RAG"). Small talk ("hola", "gracias")
@@ -110,8 +110,8 @@ prompt, and the output guard rejects factual answers that cite nothing (see §6)
 **Two kinds of knowledge**, because they have different shapes:
 
 1. **Structured facts** (offices, hours, contact channels, fee, credentials) come from the
-   page's schema.org JSON-LD, parsed deterministically (no LLM), stored in `clinic_facts` with
-   their source URL. The tools `get_clinic_information`, `get_contact_information` and
+   page's schema.org JSON-LD, parsed deterministically (no LLM), stored as one versioned
+   `clinic_profiles` row with its source URL. The tools `get_clinic_information`, `get_contact_information` and
    `get_appointment_information` read them. Precise, cheap, cacheable, and impossible to
    "half retrieve".
 2. **Unstructured text** (descriptions, FAQ answers, "sobre mí", future PDFs) goes through
@@ -125,7 +125,7 @@ leaf section or FAQ pair; long sections split on paragraph boundaries with overl
 is prefixed with its heading path, e.g. "Consultorios › Boulogne") → SHA-256 per document and
 per chunk → embed only chunks whose hash is new → write a new **document version** in one
 transaction and mark the previous one superseded. Unchanged documents are skipped, so
-re-running is cheap and idempotent. Every run writes an `ingestion_runs` report.
+re-running is cheap and idempotent. Every run writes a `kb_ingestion_runs` report.
 
 **Hybrid search** is one SQL function, `kb_hybrid_search(...)` (ADR 0004, ADR 0011):
 
@@ -174,8 +174,8 @@ must then say the site does not cover it). No reranker: ranking is not where the
   unchanged.
 - **Channel-independent pipeline**: `ChatService` (`packages/core/chat`) runs clean → emergency
   fast path → redact → agent → remember for any channel (§9).
-- **Measured** (2026-11-06, real model): a one-tool question takes two calls, about 5–6 s and
-  US$0.0006.
+- **Measured** (Phase 7, 42 conversations, real model): median 3.0 s, about US$0.0003 per
+  conversation with a warm prompt cache and US$0.0006 with a cold one (EVALUATION.md).
 
 ## 6. Safety and privacy (summary; details in SECURITY.md and PRIVACY.md)
 
@@ -192,19 +192,19 @@ must then say the site does not cover it). No reranker: ranking is not where the
   function secrets, not in the database, expires after 30 minutes idle and is deleted by a
   scheduled cleanup call (InsForge schedules) plus opportunistic deletes on write. Metrics rows have no text.
 
-## 7. Data model (first migration)
+## 7. Data model
 
-| Table                | Purpose                                                                                                                          |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `sources`            | Allowlisted origins (id, url, kind, enabled).                                                                                    |
-| `documents`          | One logical document per source key; `current_version_id`.                                                                       |
-| `document_versions`  | Immutable snapshots: content hash, extracted text, fetched/indexed timestamps, status.                                           |
-| `chunks`             | Text, heading path, anchor URL, token estimate, content hash, `embedding vector(1024)`, `embedding_model`, generated `tsvector`. |
-| `ingestion_runs`     | Status, timing, counts and errors per run.                                                                                       |
-| `clinic_facts`       | Structured facts with source URL and version.                                                                                    |
-| `chat_sessions`      | Encrypted recent turns, channel, `expires_at`.                                                                                   |
-| `rate_limit_buckets` | Fixed-window counters per hashed key.                                                                                            |
-| `request_metrics`    | Content-free telemetry per request.                                                                                              |
+| Table                  | Purpose                                                                                                                                                                 |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kb_sources`           | Allowlisted origins (id, https URL, kind, enabled).                                                                                                                     |
+| `kb_documents`         | One logical document per canonical URL; `current_version_id`, `removed_at`.                                                                                             |
+| `kb_document_versions` | Immutable snapshots: version number, content hash, extracted text, status (`pending`, `active`, `superseded`, `failed`).                                                |
+| `kb_chunks`            | Ordinal, heading path, anchor URL, text, folded `search_text`, token estimate, content hash, `embedding vector(1024)`, `embedding_model`, generated Spanish `tsvector`. |
+| `kb_ingestion_runs`    | Trigger, status, timing, stats and error per run.                                                                                                                       |
+| `clinic_profiles`      | The structured profile (offices, hours, contact, fee, credentials) as versioned JSON with its source URL.                                                               |
+| `chat_sessions`        | Encrypted recent turns (`payload`), channel, turn count, `expires_at`.                                                                                                  |
+| `rate_limit_buckets`   | Fixed-window counters per HMAC of the client key.                                                                                                                       |
+| `request_metrics`      | Content-free telemetry per request: outcome, answer kind, timings, tool names, tokens, estimated cost, top similarity.                                                  |
 
 Tables live in `public` (InsForge's convention; migrations run as `project_admin`, which may only
 own objects there) with a `kb_` prefix for the knowledge base. _Verified_: InsForge grants `anon`
@@ -219,7 +219,7 @@ on every table and function.
 
 The InsForge SDK has a query builder and `rpc()`, but no raw SQL, no `or`, no full-text helper.
 Hybrid search must be a SQL function anyway. Making **every** data operation a SQL function
-(`hybrid_search`, `publish_document_version`, `rate_limit_hit`, `session_save`, ...) gives:
+(`kb_hybrid_search`, `kb_publish_document_version`, `rl_hit`, `session_put`, ...) gives:
 
 - one tiny `RpcClient` port in the core (`call(fn, args)`), with two adapters: InsForge `rpc()`
   in production, and plain SQL over PGlite in tests;
@@ -255,19 +255,19 @@ the model. See docs/whatsapp-future.md (written in Phase 5).
 | Deployable               | Built from                                                                     | Hosted on                                                |
 | ------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------- |
 | `chat-api` edge function | `apps/api` bundled with esbuild into one ESM file (npm deps as `npm:` imports) | InsForge Functions (Deno)                                |
-| `widget.js` + demo page  | `apps/widget` built with esbuild (ADR 0014)                                    | InsForge Sites                                           |
+| `widget.js`              | `apps/widget` built with esbuild (ADR 0014), inlined into the function bundle  | Served by `chat-api` at `GET /widget.js`                 |
 | Database schema          | `migrations/*.sql`                                                             | `insforge db migrations up`                              |
 | Knowledge base           | `pnpm ingest`                                                                  | Run by an admin; writes through admin-only SQL functions |
 
 ## 11. Risks and open questions
 
-| Risk                                                             | Mitigation                                                                                                |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Function timeout unknown (possibly 30 s)                         | Turn deadline 20 s, max 4 tool rounds, Haiku at low effort; measured in Phase 8.                          |
-| SSE streaming from functions not demonstrated                    | v1 returns JSON with a typing indicator; streaming is a later, measured change.                           |
-| Free plan pauses after 7 days without requests                   | Fine for development; production needs traffic, a keep-alive schedule, or Pro ($25/month, your decision). |
-| Tests run on Postgres 18 (PGlite), production is 15              | Avoid features newer than 15; run migrations and a smoke test on the real project.                        |
-| `pg_trgm` / `unaccent` available but not installed or documented | Not used. Accent folding in TypeScript.                                                                   |
-| Origin header and IP can be spoofed or shared                    | Rate limit by hashed IP and session, plus a global daily budget; documented limits.                       |
-| Embedding provider may use API data for training                 | Opt out at the provider before production (Voyage via MongoDB Atlas org settings).                        |
-| Corpus is tiny, RAG may be overkill today                        | Eval includes a full-context baseline so the trade-off is measured.                                       |
+| Risk                                                             | Mitigation                                                                                                    |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Function timeout unknown (possibly 30 s)                         | Turn deadline 20 s, max 4 tool rounds, Haiku at low effort (p95 about 5 s); confirmed on the first deploy.    |
+| SSE streaming from functions not demonstrated                    | v1 returns JSON with a typing indicator; streaming is a later, measured change.                               |
+| Free plan pauses after 7 days without requests                   | Fine for development; production needs traffic, a keep-alive schedule, or Pro ($25/month, your decision).     |
+| Tests run on Postgres 18 (PGlite), production is 15              | Avoid features newer than 15; run migrations and a smoke test on the real project.                            |
+| `pg_trgm` / `unaccent` available but not installed or documented | Not used. Accent folding in TypeScript.                                                                       |
+| Origin header and IP can be spoofed or shared                    | Rate limit by hashed IP and session, plus a global daily budget; documented limits.                           |
+| Embedding provider may use API data for training                 | Opt out at the provider before production (Voyage via MongoDB Atlas org settings).                            |
+| Corpus is tiny, RAG may be overkill today                        | Measured: same quality as the whole site in the prompt, 1 s slower, cheaper when traffic is quiet (ADR 0015). |

@@ -12,17 +12,18 @@ embeddings for search.
 
 ## Status
 
-| Phase                     | State   | Notes                                                                                                                         |
-| ------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 0. Discovery and planning | done    | [Architecture](ARCHITECTURE.md), [ADRs](docs/adr), [knowledge inventory](docs/knowledge-inventory.md)                         |
-| 1. Foundation             | done    | Workspace, config, schema on InsForge, PGlite and live tests; see [DEPLOYMENT.md](DEPLOYMENT.md)                              |
-| 2. Knowledge ingestion    | done    | 25 chunks + clinic profile on InsForge; see [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md)                                            |
-| 3. Retrieval engine       | done    | Hybrid search + two-signal gate on InsForge; Recall@5 100%, see [EVALUATION.md](EVALUATION.md)                                |
-| 4. Agent                  | done    | Claude Haiku 5.5, four read-only tools, JSON answer, four safety layers; `pnpm cli chat`                                      |
-| 5. Backend API            | done    | Hono API: CORS, limits, budget, encrypted sessions, metrics; bundle runs on Deno; [docs/api.md](docs/api.md)                  |
-| 6. Widget                 | done    | 18 KiB, Shadow DOM, text-only rendering, accessible; 10 Chromium e2e tests; [docs/widget.md](docs/widget.md)                  |
-| 7. Testing and evaluation | done    | 42-conversation agent evaluation with a faithfulness judge; RAG vs whole-site prompt measured; [EVALUATION.md](EVALUATION.md) |
-| 8. Deployment             | planned | Schema and knowledge base are on InsForge; no public endpoint yet.                                                            |
+| Phase                     | State    | Notes                                                                                                                         |
+| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 0. Discovery and planning | done     | [Architecture](ARCHITECTURE.md), [ADRs](docs/adr), [knowledge inventory](docs/knowledge-inventory.md)                         |
+| 1. Foundation             | done     | Workspace, config, schema on InsForge, PGlite and live tests; see [DEPLOYMENT.md](DEPLOYMENT.md)                              |
+| 2. Knowledge ingestion    | done     | 25 chunks + clinic profile on InsForge; see [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md)                                            |
+| 3. Retrieval engine       | done     | Hybrid search + two-signal gate on InsForge; Recall@5 100%, see [EVALUATION.md](EVALUATION.md)                                |
+| 4. Agent                  | done     | Claude Haiku 5.5, four read-only tools, JSON answer, four safety layers; `pnpm cli chat`                                      |
+| 5. Backend API            | done     | Hono API: CORS, limits, budget, encrypted sessions, metrics; bundle runs on Deno; [docs/api.md](docs/api.md)                  |
+| 6. Widget                 | done     | 18 KiB, Shadow DOM, text-only rendering, accessible; 10 Chromium e2e tests; [docs/widget.md](docs/widget.md)                  |
+| 7. Testing and evaluation | done     | 42-conversation agent evaluation with a faithfulness judge; RAG vs whole-site prompt measured; [EVALUATION.md](EVALUATION.md) |
+| 8. Deployment             | prepared | Schema and knowledge base on InsForge; bundle, smoke test and embed code ready; not deployed (needs approval)                 |
+| 9. Final delivery         | done     | [Walkthrough](docs/WALKTHROUGH.md) and [interview notes](docs/INTERVIEW.md)                                                   |
 
 <p><img src="docs/img/widget-mobile.png" alt="The assistant on a phone, answering that the site does not say whether the doctor works with OSDE and offering WhatsApp" width="300"></p>
 
@@ -66,3 +67,5 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the layout and conventions.
 - [docs/api.md](docs/api.md): HTTP API reference
 - [docs/widget.md](docs/widget.md): install the widget, what it guarantees
 - [docs/whatsapp-future.md](docs/whatsapp-future.md): how a WhatsApp channel would plug in
+- [docs/WALKTHROUGH.md](docs/WALKTHROUGH.md): the final technical walkthrough, end to end
+- [docs/INTERVIEW.md](docs/INTERVIEW.md): a short presentation of the project for interviews
