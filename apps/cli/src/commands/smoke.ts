@@ -88,11 +88,15 @@ export async function smokeCommand(argv: string[]): Promise<number> {
     return `${(size / 1024).toFixed(1)} KiB`;
   });
 
-  await check("widget texts and CORS for the allowed origin", async () => {
+  await check("widget texts, readable from the site", async () => {
     const response = await fetch(at(`/v1/config`), { headers: { Origin: origin } });
     expectStatus(response, 200);
     const allowed = response.headers.get("Access-Control-Allow-Origin");
-    if (allowed !== origin) throw new Error(`Access-Control-Allow-Origin ${allowed}`);
+    // InsForge's gateway owns CORS on functions and answers "*" (the widget sends no
+    // credentials, so browsers accept it); our own server answers with the origin.
+    if (allowed !== origin && allowed !== "*") {
+      throw new Error(`Access-Control-Allow-Origin ${allowed}`);
+    }
     const body = (await response.json()) as { disclosure?: string };
     if (!body.disclosure) throw new Error("no AI disclosure text");
     return "";

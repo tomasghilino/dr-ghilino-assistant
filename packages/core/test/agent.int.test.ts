@@ -126,7 +126,7 @@ describe("Agent (PGlite, site fixtures, scripted model)", () => {
     ]);
     const results = toolResultsIn(second ?? requestAt(llm, 0));
     expect(results).toContain("D'Elía 1367");
-    expect(results).toContain("el sitio no publica la hora de cierre");
+    expect(results).toContain("desde las 18:00");
     // Same system prompt and tools on every call of the turn (append-only, cache-friendly).
     expect(second?.system).toEqual(llm.requests[0]?.system);
     expect(second?.system.dynamic).toMatch(/jueves|viernes/);

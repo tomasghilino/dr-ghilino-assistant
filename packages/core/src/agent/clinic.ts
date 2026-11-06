@@ -37,7 +37,11 @@ const DAY_NAMES: Record<Weekday, string> = {
   sunday: "domingo",
 };
 
-/** "lunes, martes y viernes desde las 18:00" / "sábado de 10:00 a 12:00". */
+/**
+ * "lunes, martes y viernes desde las 18:00" / "sábado de 10:00 a 12:00". A slot without a closing
+ * time says only "desde": a note on each slot made the model say "no closing time is published"
+ * about Saturdays too (agent evaluation, 2026-11-06). The prompt covers "¿hasta qué hora?".
+ */
 export function describeHours(hours: ClinicProfile["offices"][number]["hours"]): string[] {
   return hours.map((slot) => {
     const names = slot.days.map((day) => DAY_NAMES[day]);
@@ -45,7 +49,7 @@ export function describeHours(hours: ClinicProfile["offices"][number]["hours"]):
       names.length > 1 ? `${names.slice(0, -1).join(", ")} y ${names.at(-1)}` : (names[0] ?? "");
     return slot.closes
       ? `${days} de ${slot.opens} a ${slot.closes}`
-      : `${days} desde las ${slot.opens} (el sitio no publica la hora de cierre)`;
+      : `${days} desde las ${slot.opens}`;
   });
 }
 

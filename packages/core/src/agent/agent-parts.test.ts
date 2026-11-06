@@ -81,9 +81,9 @@ describe("SourceRegistry", () => {
 });
 
 describe("clinic helpers", () => {
-  it("describes hours in Spanish and says when no closing time is published", () => {
+  it("describes hours in Spanish, with a closing time only when there is one", () => {
     expect(describeHours(PROFILE.offices[1]?.hours ?? [])).toEqual([
-      "lunes, martes y viernes desde las 18:00 (el sitio no publica la hora de cierre)",
+      "lunes, martes y viernes desde las 18:00",
       "sábado de 10:00 a 12:00",
     ]);
   });

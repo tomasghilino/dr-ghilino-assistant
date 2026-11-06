@@ -33,6 +33,27 @@
       "note": "The site gives no closing time."
     },
     {
+      "id": "closing-time",
+      "category": "no_answer",
+      "turns": ["¿Hasta qué hora atiende los jueves en San Miguel?"],
+      "expectKinds": ["answered", "abstained"],
+      "mustInclude": [
+        ["17"],
+        [
+          "no publica",
+          "no indica",
+          "no dice",
+          "no figura",
+          "no aclara",
+          "no especifica",
+          "no informa",
+          "no tiene"
+        ]
+      ],
+      "mustNotInclude": ["hasta las \\d", "cierra a las \\d"],
+      "note": "Opening time yes, closing time not published: say so, invent nothing."
+    },
+    {
       "id": "whatsapp",
       "category": "direct",
       "turns": ["¿Cuál es el WhatsApp del doctor?"],
@@ -133,6 +154,17 @@
       "turns": ["¿Dónde atiende?", "¿y los sábados?"],
       "expectKinds": ["answered"],
       "mustInclude": [["Boulogne"], ["10"]]
+    },
+    {
+      "id": "saturday-hours",
+      "category": "direct",
+      "turns": ["¿Qué horario tiene los sábados?"],
+      "expectKinds": ["answered"],
+      "mustInclude": [["10"], ["12"]],
+      "mustNotInclude": [
+        "no (publica|indica|dice|figura|tiene|aclara|especifica) (la |el )?(hora|horario) de cierre"
+      ],
+      "note": "Saturday is the one slot with a closing time; regression for run 6."
     },
     {
       "id": "follow-up-booking",
