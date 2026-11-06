@@ -1,6 +1,8 @@
 import { type Action, ChatApi, type ChatReply, DEFAULT_CONFIG, type WidgetConfig } from "./api.ts";
+import { el, icon } from "./dom.ts";
 import { isActionLink, isSiteLink, opensNewTab } from "./links.ts";
 import { STYLES } from "./styles.ts";
+import { coverVisualViewport } from "./viewport.ts";
 
 /**
  * The embeddable chat widget (Phase 6). One <script> tag on the page:
@@ -14,20 +16,6 @@ import { STYLES } from "./styles.ts";
  * - It works with the keyboard and a screen reader: a labelled launcher, a dialog, a live log.
  */
 
-const ICONS = {
-  chat: "M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H10l-4.2 3.6c-.5.4-1.3 0-1.3-.6V16A2.5 2.5 0 0 1 4 13.5z",
-  close: "M6 6l12 12M18 6L6 18",
-  trash: "M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3",
-  send: "M4 12l16-8-6 16-2.5-6.5z",
-  whatsapp: "M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z",
-  call: "M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z",
-  email: "M3 6h18v12H3zM3 7l9 6 9-6",
-  directions:
-    "M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z",
-} as const;
-
-type IconName = keyof typeof ICONS;
-
 interface Options {
   api: string;
   position: "right" | "left";
@@ -37,14 +25,14 @@ interface Options {
 }
 
 /** What a page may call when it brings its own button (`data-launcher="none"`). */
-export interface AssistantControls {
+interface AssistantControls {
   open(trigger?: HTMLElement): void;
   close(): void;
   toggle(trigger?: HTMLElement): void;
   isOpen(): boolean;
 }
 
-export class ChatWidget {
+class ChatWidget {
   private readonly api: ChatApi;
   private readonly root: ShadowRoot;
   private config: WidgetConfig = DEFAULT_CONFIG;
@@ -283,44 +271,14 @@ export class ChatWidget {
     window.dispatchEvent(new CustomEvent("ghilino-assistant:toggle", { detail: { open } }));
   }
 
-  /**
-   * On a phone the panel must cover what the visitor actually sees. iOS Safari keeps fixed
-   * elements on the layout viewport: when the keyboard opens it pans the visible area instead, so a
-   * full-height panel slid up (header off screen, the page showing below) and the input ended up
-   * under the keyboard. The visual viewport is the visible area: the panel takes its size and
-   * position, and the page behind does not scroll while the chat covers it.
-   */
   private followViewport(open: boolean): void {
     this.releaseViewport?.();
     this.releaseViewport = null;
     if (!open || !this.phone.matches) return;
-    const page = document.documentElement;
-    const previousOverflow = page.style.overflow;
-    page.style.overflow = "hidden";
-    const viewport = window.visualViewport;
-    const place = () => {
-      if (!viewport) return;
-      const style = this.panel.style;
-      style.top = `${viewport.offsetTop}px`;
-      style.left = `${viewport.offsetLeft}px`;
-      style.width = `${viewport.width}px`;
-      style.height = `${viewport.height}px`;
-      style.bottom = "auto";
-      style.right = "auto";
+    this.releaseViewport = coverVisualViewport(this.panel, () => {
       // Keyboard opening: keep the latest message in sight above it.
       if (this.root.activeElement === this.input) this.scrollToEnd();
-    };
-    place();
-    viewport?.addEventListener("resize", place);
-    viewport?.addEventListener("scroll", place);
-    this.releaseViewport = () => {
-      viewport?.removeEventListener("resize", place);
-      viewport?.removeEventListener("scroll", place);
-      for (const property of ["top", "left", "width", "height", "bottom", "right"]) {
-        this.panel.style.removeProperty(property);
-      }
-      page.style.overflow = previousOverflow;
-    };
+    });
   }
 
   private onInput(): void {
@@ -448,34 +406,6 @@ export class ChatWidget {
       this.log.scrollTop = this.log.scrollHeight;
     });
   }
-}
-
-/** createElement with attributes and optional text; text always goes through textContent. */
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  attributes: Record<string, string> = {},
-  text?: string,
-): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag);
-  for (const [name, value] of Object.entries(attributes)) node.setAttribute(name, value);
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
-function icon(name: IconName): SVGSVGElement {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("stroke", "currentColor");
-  svg.setAttribute("stroke-width", "1.8");
-  svg.setAttribute("stroke-linecap", "round");
-  svg.setAttribute("stroke-linejoin", "round");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("focusable", "false");
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  path.setAttribute("d", ICONS[name]);
-  svg.append(path);
-  return svg;
 }
 
 /** Entry point: read the script tag's data attributes and mount once. */

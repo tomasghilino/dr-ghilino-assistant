@@ -1,6 +1,6 @@
 import { AppError } from "../lib/errors.ts";
 
-export interface JsonRequest {
+interface JsonRequest {
   fetch: typeof fetch;
   url: string;
   apiKey: string;

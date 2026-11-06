@@ -19,7 +19,7 @@ export interface ChatReply {
   actions: Action[];
 }
 
-export type ChatResult =
+type ChatResult =
   | { ok: true; reply: ChatReply }
   | { ok: false; message: string; actions: Action[]; retryAfterSeconds: number | null };
 
