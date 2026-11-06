@@ -40,6 +40,9 @@ export class ChatWidget {
   private config: WidgetConfig = DEFAULT_CONFIG;
   private conversationId: string | null = null;
   private busy = false;
+  /** Phones: the panel covers the screen (styles.ts) and follows the visible viewport. */
+  private readonly phone = window.matchMedia("(max-width: 480px)");
+  private releaseViewport: (() => void) | null = null;
 
   private launcher!: HTMLButtonElement;
   private panel!: HTMLElement;
@@ -61,6 +64,7 @@ export class ChatWidget {
       this.renderTexts();
     });
     if (options.open) this.setOpen(true);
+    this.phone.addEventListener("change", () => this.followViewport(this.panel.hidden === false));
   }
 
   private applyStyles(): void {
@@ -92,6 +96,7 @@ export class ChatWidget {
       role: "dialog",
       "aria-modal": "false",
       "aria-labelledby": "ghilino-chat-title",
+      tabindex: "-1",
       hidden: "",
     });
 
@@ -225,14 +230,58 @@ export class ChatWidget {
       open ? "Cerrar el asistente virtual" : "Abrir el asistente virtual",
     );
     this.launcher.replaceChildren(icon(open ? "close" : "chat"));
+    this.followViewport(open);
     if (open) {
-      this.input.focus({ preventScroll: true });
+      // On a phone, focusing the input would pop the keyboard over the welcome text: focus the
+      // dialog instead (screen readers still announce it); the keyboard opens when they tap.
+      if (this.phone.matches) this.panel.focus({ preventScroll: true });
+      else this.input.focus({ preventScroll: true });
       // A new conversation starts at the top (disclosure first); an ongoing one at the last message.
       if (this.log.querySelector(".message.visitor")) this.scrollToEnd();
       else this.log.scrollTop = 0;
     } else {
       this.launcher.focus();
     }
+  }
+
+  /**
+   * On a phone the panel must cover what the visitor actually sees. iOS Safari keeps fixed
+   * elements on the layout viewport: when the keyboard opens it pans the visible area instead, so a
+   * full-height panel slid up (header off screen, the page showing below) and the input ended up
+   * under the keyboard. The visual viewport is the visible area: the panel takes its size and
+   * position, and the page behind does not scroll while the chat covers it.
+   */
+  private followViewport(open: boolean): void {
+    this.releaseViewport?.();
+    this.releaseViewport = null;
+    if (!open || !this.phone.matches) return;
+    const page = document.documentElement;
+    const previousOverflow = page.style.overflow;
+    page.style.overflow = "hidden";
+    const viewport = window.visualViewport;
+    const place = () => {
+      if (!viewport) return;
+      const style = this.panel.style;
+      style.top = `${viewport.offsetTop}px`;
+      style.left = `${viewport.offsetLeft}px`;
+      style.width = `${viewport.width}px`;
+      style.height = `${viewport.height}px`;
+      style.bottom = "auto";
+      style.right = "auto";
+      // Keyboard opening: keep the latest message in sight above it.
+      if (this.root.activeElement === this.input) this.scrollToEnd();
+    };
+    place();
+    viewport?.addEventListener("resize", place);
+    viewport?.addEventListener("scroll", place);
+    this.releaseViewport = () => {
+      viewport?.removeEventListener("resize", place);
+      viewport?.removeEventListener("scroll", place);
+      for (const property of ["top", "left", "width", "height", "bottom", "right"]) {
+        this.panel.style.removeProperty(property);
+      }
+      page.style.overflow = previousOverflow;
+    };
   }
 
   private onInput(): void {

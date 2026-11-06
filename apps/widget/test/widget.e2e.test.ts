@@ -295,6 +295,58 @@ describe("chat widget in Chromium", () => {
     expect([box?.x, box?.y, box?.width, Math.round(box?.height ?? 0)]).toEqual([0, 0, 375, 700]);
   });
 
+  // iOS Safari: when the keyboard opens, the visible area shrinks and pans, while fixed elements
+  // stay on the layout viewport. Chromium has no on-screen keyboard, so a stand-in visualViewport
+  // plays iOS's part (reported on an iPhone on 2026-11-06: header cut off, page showing below).
+  it("follows the visible viewport on a phone when the keyboard opens, and gives it back", async () => {
+    await page.addInitScript(() => {
+      const viewport = Object.assign(new EventTarget(), {
+        offsetTop: 0,
+        offsetLeft: 0,
+        width: 375,
+        height: 700,
+        scale: 1,
+      });
+      Object.defineProperty(window, "visualViewport", { value: viewport });
+      (window as unknown as { keyboard: (height: number, top: number) => void }).keyboard = (
+        height,
+        top,
+      ) => {
+        viewport.height = height;
+        viewport.offsetTop = top;
+        viewport.dispatchEvent(new Event("resize"));
+        viewport.dispatchEvent(new Event("scroll"));
+      };
+    });
+    await page.setViewportSize({ width: 375, height: 700 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.reload();
+    await open();
+    const dialog = host().getByRole("dialog");
+    const round = (box: { x: number; y: number; width: number; height: number } | null) =>
+      [box?.x, box?.y, box?.width, box?.height].map((value) => Math.round(value ?? -1));
+    expect(round(await dialog.boundingBox())).toEqual([0, 0, 375, 700]);
+    // No keyboard on open: the dialog has focus, not the message box.
+    expect(
+      await page.evaluate(
+        () => document.querySelector("#ghilino-assistant")?.shadowRoot?.activeElement?.id,
+      ),
+    ).toBe("ghilino-chat-panel");
+    expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("hidden");
+
+    // The keyboard takes 300 px and Safari pans the visible area down by 150 px.
+    await page.evaluate(() =>
+      (window as unknown as { keyboard: (height: number, top: number) => void }).keyboard(400, 150),
+    );
+    expect(round(await dialog.boundingBox())).toEqual([0, 150, 375, 400]);
+    const input = await host().getByRole("textbox", { name: "Tu consulta" }).boundingBox();
+    expect((input?.y ?? 0) + (input?.height ?? 0)).toBeLessThanOrEqual(550);
+    expect(input?.y ?? 0).toBeGreaterThanOrEqual(150);
+
+    await host().getByRole("button", { name: "Cerrar el asistente virtual" }).click();
+    expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("");
+  });
+
   it("has no serious accessibility violations (axe-core)", async () => {
     steps.push(toolUse({ name: "get_contact_information" }), (request) =>
       finalAnswer({

@@ -50,6 +50,7 @@ button, textarea { font: inherit; color: inherit; }
   animation: rise 180ms ease-out;
 }
 :host([data-position="left"]) .panel { right: auto; left: 20px; }
+.panel:focus { outline: none; }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 header {
@@ -66,7 +67,7 @@ header p { margin: 2px 0 0; font-size: 13px; opacity: 0.85; line-height: 1.3; }
 .icon-button:hover { background: rgb(255 255 255 / 0.12); }
 .icon-button svg { width: 18px; height: 18px; }
 
-.log { flex: 1; overflow-y: auto; padding: 16px; background: var(--paper); display: flex; flex-direction: column; gap: 12px; }
+.log { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 16px; background: var(--paper); display: flex; flex-direction: column; gap: 12px; }
 .disclosure {
   margin: 0; padding: 10px 12px; border-radius: 12px; background: #fff;
   border: 1px solid rgb(5 68 94 / 0.12); color: var(--muted); font-size: 13px; line-height: 1.45;
