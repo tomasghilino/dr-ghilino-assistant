@@ -11,7 +11,7 @@ search tool) unnecessary. The knowledge inventory and the Phase 1 learning note 
 this instead of assuming it.
 
 Phase 7 ran the agent evaluation (42 conversations, deterministic checks and a faithfulness judge)
-twice with each design, at `effort: low` (EVALUATION.md, "Retrieval or the whole site in the
+twice with each design, at `effort: low` (docs/evaluation.md, "Retrieval or the whole site in the
 prompt"):
 
 | Knowledge                | Passed (warm / cold) | Cost per conversation, warm / cold | Latency p50, warm |

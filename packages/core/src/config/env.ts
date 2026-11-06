@@ -68,7 +68,7 @@ export const retrievalConfigSchema = z.object({
   RETRIEVAL_RRF_K: positiveInt(60, 1000),
   /**
    * Confidence gate (ADR 0011): below this best cosine similarity the assistant abstains instead
-   * of answering. Tuned with `pnpm cli eval:retrieval`; see EVALUATION.md for the measurements.
+   * of answering. Tuned with `pnpm cli eval:retrieval`; see docs/evaluation.md for the measurements.
    */
   RETRIEVAL_MIN_SIMILARITY: z.coerce.number().min(0).max(1).default(0.35),
   /**

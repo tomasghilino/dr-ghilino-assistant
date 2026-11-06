@@ -21,7 +21,7 @@ list; it does not discover sources on its own.
 - Response headers: `x-frame-options: SAMEORIGIN`, `x-content-type-options: nosniff`,
   HSTS, and **no Content-Security-Policy**. The embed script can load today; if a CSP is
   added later it must allow the widget's script origin (`script-src`) and API origin
-  (`connect-src`). See DEPLOYMENT.md.
+  (`connect-src`). See docs/deployment.md.
 
 ## Authoritative sources
 

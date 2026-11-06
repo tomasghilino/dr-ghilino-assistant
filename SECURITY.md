@@ -1,7 +1,7 @@
 # Security
 
 What can go wrong with a public, anonymous chat endpoint that spends money on every message and
-talks about health, and what stops it. Status: deployed on 2026-11-06 (DEPLOYMENT.md).
+talks about health, and what stops it. Status: deployed on 2026-11-06 (docs/deployment.md).
 
 ## Assets and threats
 
@@ -77,7 +77,7 @@ overrides for Node but Deno would install as published.
 - **The client IP comes from a proxy header.** InsForge appends to `X-Forwarded-For` instead of
   overwriting it, so the leftmost entries are whatever the client sent. The API reads the visitor
   two entries from the end (`CLIENT_IP_TRUSTED_HOPS=2`), verified in production with forged
-  headers (DEPLOYMENT.md). If InsForge changes its proxy chain, per-client limits may key on the
+  headers (docs/deployment.md). If InsForge changes its proxy chain, per-client limits may key on the
   wrong entry; the daily budget still holds.
 - **CORS is set by InsForge's gateway**, not by the API: preflights are answered by the gateway and
   responses carry `Access-Control-Allow-Origin: *`. The API's own `Origin` check is what refuses

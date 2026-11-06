@@ -12,7 +12,7 @@ export const SITE = {
   llmsTxt: () => readFileSync(join(FIXTURES, "drluisghilino-llms-2026-11-05.txt"), "utf8"),
 };
 
-export interface FakeResponse {
+interface FakeResponse {
   body: string;
   status?: number;
   contentType?: string;

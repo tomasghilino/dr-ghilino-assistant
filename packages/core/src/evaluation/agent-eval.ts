@@ -15,7 +15,7 @@ import {
 import { percentile } from "./retrieval-metrics.ts";
 
 /**
- * Agent evaluation (EVALUATION.md, "Agent"). Each case is a short conversation; the reply to the
+ * Agent evaluation (docs/evaluation.md, "Agent"). Each case is a short conversation; the reply to the
  * last message is graded twice:
  *
  * 1. Deterministic checks: the answer kind, required facts, forbidden content, no links in the

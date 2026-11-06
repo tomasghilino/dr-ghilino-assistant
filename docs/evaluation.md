@@ -1,7 +1,7 @@
 # Evaluation
 
 How we measure whether the assistant finds the right information and knows when it has none. Every
-number here comes from a report file in [evals/reports](evals/reports); rerun the command to check
+number here comes from a report file in [evals/reports](../evals/reports); rerun the command to check
 it.
 
 Two evaluations, one per layer:
@@ -21,7 +21,7 @@ The automated tests (unit, integration, end-to-end) are listed at the [end](#the
 pnpm cli eval:retrieval            # needs .env.local: InsForge admin key and Voyage key
 ```
 
-The dataset is [evals/retrieval-cases.json](evals/retrieval-cases.json): 47 questions written the
+The dataset is [evals/retrieval-cases.json](../evals/retrieval-cases.json): 47 questions written the
 way visitors write (voseo, no accents, typos, one word, slang), in eight categories:
 
 | Category       | Cases | What it checks                                                        |
@@ -63,7 +63,7 @@ similarities, never chunk content.
 
 ### Results (2026-11-05, voyage-4, 25 chunks)
 
-Report: [evals/reports/retrieval-2026-11-05.json](evals/reports/retrieval-2026-11-05.json).
+Report: [evals/reports/retrieval-2026-11-05.json](../evals/reports/retrieval-2026-11-05.json).
 
 | Ranking  | Hit@1 | Hit@3 | Hit@5 | Recall@5 | MRR@10 |
 | -------- | ----: | ----: | ----: | -------: | -----: |
@@ -172,7 +172,7 @@ pnpm cli eval:agent --only osde,fee    # some cases (report gets a -partial suff
 pnpm cli eval:agent --no-judge         # deterministic checks only, no judge model
 ```
 
-Each case in [evals/agent-cases.json](evals/agent-cases.json) is a conversation (one or two visitor
+Each case in [evals/agent-cases.json](../evals/agent-cases.json) is a conversation (one or two visitor
 messages) that goes through the whole assistant exactly as the API runs it: `ChatService` (input
 cleaning, emergency fast path, redaction), the agent loop with the real Claude Haiku 5.5, the real
 Voyage embeddings and knowledge base on InsForge, and the output guard. The only difference from
@@ -218,15 +218,15 @@ spots. Sonnet costs 20 times more per token than Haiku, but it reads only about 
 
 ### Results (2026-11-06, claude-haiku-5-5, judge claude-sonnet-5-5)
 
-| Run | Effort | Passed | Kind as expected | Required facts | Faithful / judged | Latency p50 / p95 | Assistant |    Judge | Report                                                   |
-| --- | ------ | -----: | ---------------: | -------------: | ----------------: | ----------------: | --------: | -------: | -------------------------------------------------------- |
-| 2   | low    |  39/42 |             100% |           100% |             20/21 |     3.0 s / 4.9 s |  US$0.026 | US$0.072 | [low-run2](evals/reports/agent-2026-11-06-low-run2.json) |
-| 3   | low    |  40/42 |             100% |           100% |             18/19 |     3.2 s / 4.6 s |  US$0.025 | US$0.065 | [low-run3](evals/reports/agent-2026-11-06-low-run3.json) |
-| 4   | low    |  41/42 |             100% |           100% |             19/20 |     3.2 s / 4.2 s |  US$0.025 | US$0.076 | [low-run4](evals/reports/agent-2026-11-06-low-run4.json) |
-| 5   | low    |  42/42 |             100% |           100% |             20/20 |     3.0 s / 5.2 s |  US$0.012 | US$0.069 | [low-run5](evals/reports/agent-2026-11-06-low-run5.json) |
-| 6   | low    |  41/42 |             100% |           100% |             20/21 |     2.8 s / 4.8 s |  US$0.012 | US$0.078 | [low-run6](evals/reports/agent-2026-11-06-low-run6.json) |
-| 7   | low    |  44/44 |             100% |           100% |             23/23 |     2.9 s / 4.5 s |  US$0.013 | US$0.083 | [low-run7](evals/reports/agent-2026-11-06-low-run7.json) |
-| —   | medium |  42/42 |             100% |           100% |             20/20 |     3.2 s / 6.4 s |  US$0.026 | US$0.070 | [medium](evals/reports/agent-2026-11-06-medium.json)     |
+| Run | Effort | Passed | Kind as expected | Required facts | Faithful / judged | Latency p50 / p95 | Assistant |    Judge | Report                                                      |
+| --- | ------ | -----: | ---------------: | -------------: | ----------------: | ----------------: | --------: | -------: | ----------------------------------------------------------- |
+| 2   | low    |  39/42 |             100% |           100% |             20/21 |     3.0 s / 4.9 s |  US$0.026 | US$0.072 | [low-run2](../evals/reports/agent-2026-11-06-low-run2.json) |
+| 3   | low    |  40/42 |             100% |           100% |             18/19 |     3.2 s / 4.6 s |  US$0.025 | US$0.065 | [low-run3](../evals/reports/agent-2026-11-06-low-run3.json) |
+| 4   | low    |  41/42 |             100% |           100% |             19/20 |     3.2 s / 4.2 s |  US$0.025 | US$0.076 | [low-run4](../evals/reports/agent-2026-11-06-low-run4.json) |
+| 5   | low    |  42/42 |             100% |           100% |             20/20 |     3.0 s / 5.2 s |  US$0.012 | US$0.069 | [low-run5](../evals/reports/agent-2026-11-06-low-run5.json) |
+| 6   | low    |  41/42 |             100% |           100% |             20/21 |     2.8 s / 4.8 s |  US$0.012 | US$0.078 | [low-run6](../evals/reports/agent-2026-11-06-low-run6.json) |
+| 7   | low    |  44/44 |             100% |           100% |             23/23 |     2.9 s / 4.5 s |  US$0.013 | US$0.083 | [low-run7](../evals/reports/agent-2026-11-06-low-run7.json) |
+| —   | medium |  42/42 |             100% |           100% |             20/20 |     3.2 s / 6.4 s |  US$0.026 | US$0.070 | [medium](../evals/reports/agent-2026-11-06-medium.json)     |
 
 In all seven reports: every answer kind as expected, every required fact present, 0 uncited answers,
 0 links in the text, 0 prompt leaks, 0 errors, and none of the agent's guard flags raised (no
@@ -295,12 +295,12 @@ alternative: put every chunk in the system prompt and drop the search tool (the 
 stay). `pnpm cli eval:agent --knowledge full-context` does exactly that, with the same cases, checks
 and judge (which then gets the whole site as evidence).
 
-| Knowledge                | Cache | Passed | Faithful | Cost per conversation | Latency p50 / p95 | Tool calls | Report                                                                             |
-| ------------------------ | ----- | -----: | -------: | --------------------: | ----------------: | ---------: | ---------------------------------------------------------------------------------- |
-| retrieval (search tool)  | warm  |  42/42 |    20/20 |            US$0.00028 |     3.0 s / 5.2 s |         32 | [low-run5](evals/reports/agent-2026-11-06-low-run5.json)                           |
-| whole site in the prompt | warm  |  42/42 |    20/20 |            US$0.00030 |     1.9 s / 4.0 s |          5 | [low-full-context-run2](evals/reports/agent-2026-11-06-low-full-context-run2.json) |
-| retrieval (search tool)  | cold  |  41/42 |    19/20 |            US$0.00059 |     3.2 s / 4.2 s |         36 | [low-run4](evals/reports/agent-2026-11-06-low-run4.json)                           |
-| whole site in the prompt | cold  |  42/42 |    20/20 |            US$0.00104 |     2.1 s / 3.8 s |          1 | [low-full-context](evals/reports/agent-2026-11-06-low-full-context.json)           |
+| Knowledge                | Cache | Passed | Faithful | Cost per conversation | Latency p50 / p95 | Tool calls | Report                                                                                |
+| ------------------------ | ----- | -----: | -------: | --------------------: | ----------------: | ---------: | ------------------------------------------------------------------------------------- |
+| retrieval (search tool)  | warm  |  42/42 |    20/20 |            US$0.00028 |     3.0 s / 5.2 s |         32 | [low-run5](../evals/reports/agent-2026-11-06-low-run5.json)                           |
+| whole site in the prompt | warm  |  42/42 |    20/20 |            US$0.00030 |     1.9 s / 4.0 s |          5 | [low-full-context-run2](../evals/reports/agent-2026-11-06-low-full-context-run2.json) |
+| retrieval (search tool)  | cold  |  41/42 |    19/20 |            US$0.00059 |     3.2 s / 4.2 s |         36 | [low-run4](../evals/reports/agent-2026-11-06-low-run4.json)                           |
+| whole site in the prompt | cold  |  42/42 |    20/20 |            US$0.00104 |     2.1 s / 3.8 s |          1 | [low-full-context](../evals/reports/agent-2026-11-06-low-full-context.json)           |
 
 "Cold" means every conversation started with an empty prompt cache (a random canary per
 conversation); "warm" means one canary for the run, so conversations after the first read the
@@ -323,7 +323,7 @@ What this shows:
    curated answers), gives per-chunk citations and a relevance signal for the metrics, and keeps the
    prompt short. The whole-site prompt grows with every page.
 
-Decision ([ADR 0015](docs/adr/0015-retrieval-kept-over-full-context.md)): keep retrieval. The
+Decision ([ADR 0015](adr/0015-retrieval-kept-over-full-context.md)): keep retrieval. The
 whole-site prompt is the measured fallback if latency becomes the main complaint while the site
 stays this small.
 
@@ -338,14 +338,14 @@ What production would pay for Claude, from the runs above: about US$0.0003 per c
 the prompt cache is warm and US$0.0006 when it is cold. At 1,000 conversations a month, between
 US$0.30 and US$0.60. The prompt cache is what makes it cheap: the system prompt and the tool
 definitions are read from cache at a tenth of the input price. For it to work across conversations,
-`SAFETY_PROMPT_CANARY` must be set in production (DEPLOYMENT.md). Voyage query embeddings add a few
+`SAFETY_PROMPT_CANARY` must be set in production (deployment.md). Voyage query embeddings add a few
 thousandths of a cent per search.
 
 ### Limitations
 
 - **We wrote the 42 conversations, and we also wrote the prompt.** That risks testing what we already
   know works. There is no held-out set. Real visitor questions are not stored (by design, see
-  PRIVACY.md), so new cases have to come from the practice, from people who report a bad answer, or
+  docs/privacy.md), so new cases have to come from the practice, from people who report a bad answer, or
   from patterns in the content-free metrics (a rising abstention rate, for example).
 - **The judge is a model too.** It returned four "unfaithful" verdicts out of 124 judged answers in
   runs 2 to 7; two were about true statements it had no evidence for. Every failure is read by hand

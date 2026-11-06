@@ -11,7 +11,7 @@ never turn model output into markup.
 ## Decision
 
 - **No framework**: plain TypeScript and DOM APIs, built by esbuild into one IIFE of about 18 KiB.
-  ARCHITECTURE.md planned Vite; esbuild alone is enough for one entry file and was already a
+  docs/architecture.md planned Vite; esbuild alone is enough for one entry file and was already a
   dependency.
 - **Shadow DOM** (open mode, so tests and assistive technology can reach it) with styles in a
   constructable stylesheet, falling back to a `<style>` element in older browsers.

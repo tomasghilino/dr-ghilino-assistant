@@ -3,7 +3,7 @@ import type { RpcClient } from "../db/rpc.ts";
 import type { AnswerKind, Channel } from "../domain/types.ts";
 
 /**
- * One content-free row per request (ARCHITECTURE.md §6, PRIVACY.md). It has no column for message
+ * One content-free row per request (docs/architecture.md §6, docs/privacy.md). It has no column for message
  * text, session ids or IP addresses, so they cannot end up there by accident.
  */
 export type RequestOutcome =

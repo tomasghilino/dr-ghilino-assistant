@@ -8,7 +8,7 @@ DOM: about 18 KiB, no framework, no cookies, no trackers, no dependencies.
 ## Install
 
 The API function serves the script itself (`GET /widget.js`), so there is nothing else to host.
-InsForge passes the route in `?path=` (DEPLOYMENT.md, "What the first deploy showed"), so both URLs
+InsForge passes the route in `?path=` (deployment.md, "What the first deploy showed"), so both URLs
 use that form. Add this before `</body>`, once per page:
 
 ```html
@@ -26,15 +26,28 @@ use that form. Add this before `</body>`, once per page:
 <Script
   src={`${site.assistantApi}?path=/widget.js`}
   data-api={`${site.assistantApi}?path=/`}
-  data-position="left"
+  data-launcher="none"
   strategy="lazyOnload"
 />;
+```
+
+and the site's floating WhatsApp button opens it (`src/components/whatsapp-button.tsx`):
+
+```tsx
+onClick={(event) => {
+  const bot = window.ghilinoAssistant;
+  if (!bot) return; // not loaded: the button stays a plain WhatsApp link
+  event.preventDefault();
+  bot.toggle(event.currentTarget);
+}}
 ```
 
 - Only when `VERCEL_ENV === "production"`, like Google Analytics: previews are not in
   `ALLOWED_ORIGINS`, so the chat could not answer there.
 - `lazyOnload`: the script loads when the browser is idle, after the page.
-- `data-position="left"`: the site's WhatsApp button is bottom right.
+- `data-launcher="none"`: one floating button on the page, the WhatsApp one visitors already know.
+  The greeting offers "Escribir por WhatsApp", so whoever wanted WhatsApp is one tap away. Opening
+  the chat is tracked as `abrir_asistente`; `clic_whatsapp` stays for clicks that reach WhatsApp.
 - Tested before publishing with a local production build against the deployed API, on desktop and
   phone sizes: it answered with sources and buttons, no JavaScript errors.
 
@@ -47,6 +60,12 @@ delete the component from the layout; nothing else on the site changes.
 | `data-api`      | yes      | Base URL of the chat API. With a query string (`…?path=/`), the route goes in `path`. |
 | `data-position` | no       | `right` (default) or `left`.                                                          |
 | `data-open`     | no       | `true` opens the panel on load (for a dedicated help page; not for every page).       |
+| `data-launcher` | no       | `none`: no launcher; the page opens the chat with `window.ghilinoAssistant`.          |
+
+With `data-launcher="none"`, `window.ghilinoAssistant` offers `open(trigger?)`, `close()`,
+`toggle(trigger?)` and `isOpen()`. Focus returns to `trigger` when the chat closes. The widget
+fires `ghilino-assistant:ready` when it mounts and `ghilino-assistant:toggle` (`detail.open`) on
+every open and close, for `aria-expanded` on the page's button.
 
 The page's origin must be in the API's `ALLOWED_ORIGINS`, or every message gets a 403.
 

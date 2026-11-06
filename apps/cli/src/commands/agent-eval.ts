@@ -47,7 +47,7 @@ const USAGE = `Usage: pnpm cli eval:agent [--effort low|medium|high] [--judge-mo
   report with the answers to evals/reports/. Costs well under one US dollar.
 
   --knowledge full-context puts the whole indexed site in the system prompt and removes the
-  search tool: the baseline that retrieval is compared with in EVALUATION.md.`;
+  search tool: the baseline that retrieval is compared with in docs/evaluation.md.`;
 
 /** Counts a provider's spend. */
 class CostMeter implements LlmProvider {

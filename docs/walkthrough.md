@@ -3,7 +3,7 @@
 A guided tour of the whole system, in the order a request meets it. Each section gives the essentials
 and links to the document with the details. State on 2026-11-06: everything is built and tested
 against the real services and **deployed** on InsForge since 2026-11-06, with the widget on the
-doctor's site (DEPLOYMENT.md).
+doctor's site (deployment.md).
 
 ## 1. What it is
 
@@ -57,7 +57,7 @@ WebCrypto and plain TypeScript, so the same code runs in the Deno function, in N
 CLI (ADR 0001). Providers (LLM, embeddings, database) are ports with adapters, so tests swap in a
 scripted model, a hashing embedder and an in-process Postgres (PGlite).
 
-Details: [ARCHITECTURE.md](../ARCHITECTURE.md), ADRs 0001 to 0015 in [docs/adr](adr).
+Details: [architecture.md](architecture.md), ADRs 0001 to 0015 in [docs/adr](adr).
 
 ## 3. The knowledge base and the RAG pipeline
 
@@ -76,7 +76,7 @@ and its `llms.txt`. Nothing else is ever read.
 "Consultorios › Boulogne") → drop near-duplicates between the page and `llms.txt` (shingle
 containment) → SHA-256 per chunk → embed only new hashes (Voyage, `input_type: document`) → publish
 a new document version in one transaction. Re-running is idempotent. Today: 25 chunks, about 2,500
-tokens. Details: [KNOWLEDGE_BASE.md](../KNOWLEDGE_BASE.md).
+tokens. Details: [knowledge-base.md](knowledge-base.md).
 
 **Retrieval** (one SQL function, `kb_hybrid_search`, ADR 0004 and 0011):
 
@@ -172,11 +172,11 @@ of them.
 | Privacy                                 | Redaction before providers, encrypted 30-minute sessions, no message text in logs or metrics                |
 | Data access                             | Grants revoked, RLS on, SQL functions for `project_admin` only, pinned `search_path`                        |
 
-Details and known limitations: [SECURITY.md](../SECURITY.md), [PRIVACY.md](../PRIVACY.md).
+Details and known limitations: [SECURITY.md](../SECURITY.md), [privacy.md](privacy.md).
 
 ## 8. Deployment
 
-**Live since 2026-11-06** ([DEPLOYMENT.md](../DEPLOYMENT.md)):
+**Live since 2026-11-06** ([deployment.md](deployment.md)):
 
 1. The database: six migrations applied, the knowledge base ingested.
 2. `pnpm --filter @ghilino/api bundle` builds the widget and one 108 KiB ESM file with npm packages
@@ -186,7 +186,8 @@ Details and known limitations: [SECURITY.md](../SECURITY.md), [PRIVACY.md](../PR
 4. `pnpm cli smoke` against production: 9/9, including one real question and its follow-up.
 5. A schedule calls the cleanup endpoint every 10 minutes, which also keeps the Free-plan project
    from pausing.
-6. On the site, one `<Script>` in the root layout, production only, bottom left.
+6. On the site, one `<Script>` in the root layout, production only; the floating WhatsApp button
+   opens the chat.
 
 The first deploy answered three questions the docs did not: the project host passes routes only
 as `?path=`; `X-Forwarded-For` puts client-sent values first, so the visitor is read two entries
@@ -195,7 +196,7 @@ from the end (verified with forged headers); and the gateway owns CORS (`*`), so
 
 ## 9. Evaluation results
 
-[EVALUATION.md](../EVALUATION.md) has every number with its report file.
+[evaluation.md](evaluation.md) has every number with its report file.
 
 | What                                | Result                                                                                                                   |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -207,7 +208,7 @@ from the end (verified with forged headers); and the gateway owns CORS (`*`), so
 | Safety cases                        | every medical question declined, both emergencies answered with the fixed text, every injection resisted, no prompt leak |
 | RAG vs the whole site in the prompt | same quality; whole site about 1 s faster; RAG cheaper when traffic is quiet (ADR 0015)                                  |
 
-Automated tests, all offline: 195 unit and integration tests (`pnpm verify`, in CI), 10 end-to-end
+Automated tests, all offline: 201 unit and integration tests (`pnpm verify`, in CI), 13 end-to-end
 tests in Chromium with an accessibility scan, and 4 live tests against the real project.
 
 ## 10. Cost per conversation

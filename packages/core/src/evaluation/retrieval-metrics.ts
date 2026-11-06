@@ -1,7 +1,7 @@
 import type { GateExpectation } from "./retrieval-dataset.ts";
 
 /**
- * Retrieval metrics (EVALUATION.md). All of them compare a ranked list of chunk keys with the
+ * Retrieval metrics (docs/evaluation.md). All of them compare a ranked list of chunk keys with the
  * requirement groups of a case.
  *
  * - Hit@K: at least one relevant chunk is in the top K.

@@ -28,11 +28,11 @@ describe("normalizePath", () => {
 
 describe("clientAddress", () => {
   // Measured on InsForge: a client-sent value comes first, then the visitor, then two proxies.
-  const header = "203.0.113.99, 198.51.100.7, 10.0.1.152, 3.148.156.80";
+  const header = "203.0.113.99, 198.51.100.7, 192.0.2.10, 192.0.2.20";
 
   it("takes the address the trusted proxies saw, not what the client sent", () => {
     expect(clientAddress(header, 2)).toBe("198.51.100.7");
-    expect(clientAddress("198.51.100.7, 10.0.1.152, 3.148.156.80", 2)).toBe("198.51.100.7");
+    expect(clientAddress("198.51.100.7, 192.0.2.10, 192.0.2.20", 2)).toBe("198.51.100.7");
   });
 
   it("uses the last entry with no trusted hops (local development)", () => {
@@ -41,6 +41,6 @@ describe("clientAddress", () => {
 
   it("falls back to one shared bucket when the header is missing or too short", () => {
     expect(clientAddress(null, 2)).toBe("unknown");
-    expect(clientAddress("10.0.1.152, 3.148.156.80", 2)).toBe("unknown");
+    expect(clientAddress("192.0.2.10, 192.0.2.20", 2)).toBe("unknown");
   });
 });

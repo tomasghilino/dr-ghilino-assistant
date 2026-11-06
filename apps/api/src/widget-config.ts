@@ -1,6 +1,6 @@
 /**
  * Texts the widget shows, served by GET /v1/config so they can change without rebuilding the
- * widget. The disclosure is the wording agreed in PRIVACY.md ("Visitor-facing text").
+ * widget. The disclosure is the wording agreed in docs/privacy.md ("Visitor-facing text").
  */
 export const WIDGET_CONFIG = {
   title: "Asistente virtual",

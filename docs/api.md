@@ -1,7 +1,7 @@
 # HTTP API
 
 Base URL: `http://localhost:8787` locally (`pnpm dev:api`); on InsForge,
-`https://c94k6z7z.us-east.insforge.app/functions/chat-api` once deployed (not yet, DEPLOYMENT.md).
+`https://c94k6z7z.us-east.insforge.app/functions/chat-api` once deployed (not yet, docs/deployment.md).
 All bodies are JSON. Every response has an `X-Request-Id` header on chat routes, and security
 headers on every route (SECURITY.md).
 
