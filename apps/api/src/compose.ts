@@ -32,6 +32,8 @@ export async function createAppFromEnv(
     llm?: LlmProvider;
     embeddings?: EmbeddingProvider;
     log?: (entry: Record<string, unknown>) => void;
+    /** The built widget, served at GET /widget.js. */
+    widgetScript?: string;
   },
 ): Promise<Hono> {
   const config = parseConfig(serverConfigSchema, env);
@@ -67,6 +69,7 @@ export async function createAppFromEnv(
   return createApp({
     version: platform.version,
     ...(platform.log ? { log: platform.log } : {}),
+    ...(platform.widgetScript ? { widgetScript: platform.widgetScript } : {}),
     clientIp: (request) => (request.headers.get(ipHeader) ?? "").split(",")[0]?.trim() || "unknown",
     settings: {
       allowedOrigins: config.ALLOWED_ORIGINS,

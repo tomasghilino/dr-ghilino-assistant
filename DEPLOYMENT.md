@@ -81,8 +81,11 @@ The function is one ESM file built from `apps/api` and `packages/core`, with thi
 as `npm:` imports (ADR 0001, ADR 0013).
 
 ```bash
-pnpm --filter @ghilino/api bundle        # → apps/api/dist/chat-api.js (about 88 KiB)
+pnpm --filter @ghilino/api bundle        # builds the widget, then apps/api/dist/chat-api.js (about 108 KiB)
 ```
+
+The same function serves the widget at `GET /widget.js` (the build is inlined in the bundle), so
+one deploy publishes both, and the script always matches the API it talks to.
 
 The bundle was run on Deno 2.9.6 against the real InsForge database, Claude and Voyage on
 2026-11-06 and answered through `/functions/chat-api/v1/chat`, using a two-line harness that
@@ -120,7 +123,15 @@ npx -y @insforge/cli functions deploy chat-api --file apps/api/dist/chat-api.js 
   --name "Chat API" --description "Dr. Ghilino assistant: POST /v1/chat"
 npx -y @insforge/cli functions list
 curl -s https://c94k6z7z.us-east.insforge.app/functions/chat-api/health
+pnpm cli smoke --url https://c94k6z7z.us-east.insforge.app/functions/chat-api \
+               --origin https://drluisghilino.com.ar
 ```
+
+`pnpm cli smoke` needs no keys: it checks the public API the way the widget uses it (health, the
+widget script, CORS for the site and for a foreign origin, the emergency fast path, one real
+question and its follow-up, DELETE) and exits with 1 if anything fails. Verified against the local
+API with the real Claude, Voyage and InsForge on 2026-11-06 (9/9 checks); not yet against a deployed
+function. Add `--no-model` to skip the two checks that call Claude.
 
 To confirm on the first deploy (the docs do not say):
 
@@ -138,6 +149,9 @@ npx -y @insforge/cli schedules create --name "Assistant cleanup" --cron "*/10 * 
 ```
 
 ### 4. Before the widget goes on the doctor's site
+
+The embed code and the steps for the site are in [docs/widget.md](docs/widget.md#install). Before
+that:
 
 - The practice confirms `SAFETY_EMERGENCY_TEXT` and `SAFETY_CRISIS_TEXT`.
 - Free plan or Pro: the Free plan pauses after 7 idle days.

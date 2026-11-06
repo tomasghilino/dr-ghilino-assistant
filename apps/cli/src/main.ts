@@ -13,6 +13,7 @@ import { askCommand, chatCommand } from "./commands/agent.ts";
 import { evalAgentCommand } from "./commands/agent-eval.ts";
 import { ingestCommand, kbListCommand } from "./commands/ingest.ts";
 import { evalRetrievalCommand, searchCommand } from "./commands/retrieval.ts";
+import { smokeCommand } from "./commands/smoke.ts";
 
 /**
  * Admin CLI. Runs on a developer's machine or in CI, never in the public API.
@@ -65,6 +66,10 @@ const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promi
   "eval:agent": {
     summary: "Run evals/agent-cases.json through the real assistant and grade it (checks + judge)",
     run: evalAgentCommand,
+  },
+  smoke: {
+    summary: "Check a running API from the outside, as the widget uses it (--url, --origin)",
+    run: smokeCommand,
   },
   "ops:report": {
     summary:

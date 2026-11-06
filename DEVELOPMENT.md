@@ -34,6 +34,7 @@ pnpm cli config:check         # lists missing or invalid variables by name
 | `pnpm cli eval:agent`                 | Run the agent evaluation (real Claude, judge model) and write a report (see EVALUATION.md).      |
 | `pnpm cli ask "<q>"`                  | One question through the real assistant: answer, sources, tools, tokens, cost.                   |
 | `pnpm cli chat`                       | A conversation with the real assistant in the terminal (memory-only session).                    |
+| `pnpm cli smoke --url … --origin …`   | Check a running API from the outside, as the widget uses it (see DEPLOYMENT.md).                 |
 | `pnpm cli ops:report`                 | Requests, outcomes, kinds, latency, tokens and cost from `request_metrics`.                      |
 | `pnpm --filter @ghilino/api bundle`   | Build the InsForge function into `apps/api/dist/chat-api.js`.                                    |
 | `pnpm --filter @ghilino/widget dev`   | Widget demo on http://localhost:5173 (run the API with `ALLOWED_ORIGINS=http://localhost:5173`). |

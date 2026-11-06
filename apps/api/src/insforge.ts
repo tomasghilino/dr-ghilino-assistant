@@ -4,6 +4,8 @@
 import { createAppFromEnv } from "./compose.ts";
 
 declare const Deno: { env: { toObject(): Record<string, string> } };
+/** The built widget, inlined by scripts/bundle.mjs (esbuild `define`). */
+declare const __WIDGET_JS__: string;
 
 const SLUG = "chat-api";
 
@@ -11,6 +13,7 @@ const SLUG = "chat-api";
 // client live as long as the instance).
 const appPromise = createAppFromEnv(Deno.env.toObject(), {
   version: Deno.env.toObject().APP_VERSION ?? "insforge",
+  widgetScript: __WIDGET_JS__,
 });
 
 export default async function handler(request: Request): Promise<Response> {

@@ -268,6 +268,23 @@ describe("HTTP API (PGlite, site fixtures, scripted model)", () => {
     expect(body.suggestions.length).toBeGreaterThan(0);
   });
 
+  it("serves the widget script to other origins, and 404 when it is not built", async () => {
+    expect((await app.request("/widget.js")).status).toBe(404);
+    const withWidget = await createAppFromEnv(ENV, {
+      version: "test",
+      rpc: t.rpc,
+      llm,
+      embeddings: new HashingEmbeddings(),
+      widgetScript: "console.log('widget');",
+    });
+    const response = await withWidget.request("/widget.js");
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("text/javascript; charset=utf-8");
+    expect(response.headers.get("Cache-Control")).toBe("public, max-age=3600");
+    expect(response.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
+    expect(await response.text()).toBe("console.log('widget');");
+  });
+
   it("runs maintenance only with the token, deleting expired sessions", async () => {
     await t.db.query(
       `insert into public.chat_sessions (id, channel, payload, created_at, last_activity_at, expires_at)

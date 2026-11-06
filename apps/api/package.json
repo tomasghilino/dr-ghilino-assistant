@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tsx watch src/node.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "bundle": "node scripts/bundle.mjs"
+    "bundle": "pnpm --filter @ghilino/widget build && node scripts/bundle.mjs"
   },
   "dependencies": {
     "@ghilino/core": "workspace:*",

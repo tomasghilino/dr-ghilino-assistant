@@ -7,15 +7,45 @@ DOM: about 18 KiB, no framework, no cookies, no trackers, no dependencies.
 
 ## Install
 
-Add this before `</body>`, once per page:
+The API function serves the script itself (`GET /widget.js`), so there is nothing else to host.
+Once the function is deployed (DEPLOYMENT.md), add this before `</body>`, once per page:
 
 ```html
 <script
-  src="https://<where widget.js is hosted>/widget.js"
+  src="https://c94k6z7z.us-east.insforge.app/functions/chat-api/widget.js"
   data-api="https://c94k6z7z.us-east.insforge.app/functions/chat-api"
   defer
 ></script>
 ```
+
+If the first deploy shows that InsForge does not route sub-paths to functions (DEPLOYMENT.md, step
+2), use `…/functions/chat-api?path=/widget.js` as `src` and `…/functions/chat-api?x=1` as
+`data-api`.
+
+**On the doctor's site** (Next.js, App Router), the same tag goes once in the root layout, so it is
+on every page:
+
+```tsx
+// app/layout.tsx
+import Script from "next/script";
+
+// inside <body>, after {children}:
+<Script
+  src="https://c94k6z7z.us-east.insforge.app/functions/chat-api/widget.js"
+  data-api="https://c94k6z7z.us-east.insforge.app/functions/chat-api"
+  strategy="afterInteractive"
+/>;
+```
+
+Steps for whoever installs it:
+
+1. Deploy the API and run `pnpm cli smoke` against it (DEPLOYMENT.md).
+2. Check that `ALLOWED_ORIGINS` lists exactly the origins the site is served from (with and without
+   `www`, and any preview domain you want the widget on).
+3. Add the tag on a preview deployment of the site first, ask a question, then publish.
+4. The site sends no `Content-Security-Policy` today (checked 2026-11-06). If one is added later,
+   allow `https://c94k6z7z.us-east.insforge.app` in `script-src` and `connect-src`.
+5. To remove the assistant, delete the tag. Nothing else on the site changes.
 
 | Attribute       | Required | Meaning                                                                                            |
 | --------------- | -------- | -------------------------------------------------------------------------------------------------- |

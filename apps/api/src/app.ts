@@ -52,6 +52,8 @@ export interface AppDeps {
   clientIp?: (request: Request) => string;
   /** Structured, content-free logs. */
   log?: (entry: Record<string, unknown>) => void;
+  /** The built widget (apps/widget/dist/widget.js), served at GET /widget.js when present. */
+  widgetScript?: string;
 }
 
 const SITE_HOSTS = ["drluisghilino.com.ar"];
@@ -92,6 +94,18 @@ export function createApp(deps: AppDeps): Hono {
   app.get("/health", (c) =>
     c.json({ status: "ok", version: deps.version, time: now().toISOString() }),
   );
+
+  // The widget is served by the same function as the API: one deploy, and the script and the API
+  // it talks to always match. Pages on other origins load it with a plain <script> tag.
+  const widgetScript = deps.widgetScript;
+  if (widgetScript) {
+    app.get("/widget.js", (c) => {
+      c.header("Content-Type", "text/javascript; charset=utf-8");
+      c.header("Cache-Control", "public, max-age=3600");
+      c.header("Cross-Origin-Resource-Policy", "cross-origin");
+      return c.body(widgetScript);
+    });
+  }
 
   app.get("/v1/config", (c) => {
     c.header("Cache-Control", "public, max-age=300");
