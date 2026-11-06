@@ -20,9 +20,11 @@ embeddings for search.
 | 3. Retrieval engine       | done    | Hybrid search + two-signal gate on InsForge; Recall@5 100%, see [EVALUATION.md](EVALUATION.md)               |
 | 4. Agent                  | done    | Claude Haiku 5.5, four read-only tools, JSON answer, four safety layers; `pnpm cli chat`                     |
 | 5. Backend API            | done    | Hono API: CORS, limits, budget, encrypted sessions, metrics; bundle runs on Deno; [docs/api.md](docs/api.md) |
-| 6. Widget                 | next    |                                                                                                              |
-| 7. Testing and evaluation | planned |                                                                                                              |
+| 6. Widget                 | done    | 18 KiB, Shadow DOM, text-only rendering, accessible; 10 Chromium e2e tests; [docs/widget.md](docs/widget.md) |
+| 7. Testing and evaluation | next    |                                                                                                              |
 | 8. Deployment             | planned | Schema and knowledge base are on InsForge; no public endpoint yet.                                           |
+
+<p><img src="docs/img/widget-mobile.png" alt="The assistant on a phone, answering that the site does not say whether the doctor works with OSDE and offering WhatsApp" width="300"></p>
 
 ## How it works (short version)
 
@@ -62,4 +64,5 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the layout and conventions.
 - [EVALUATION.md](EVALUATION.md): retrieval evaluation, metrics and measured results
 - [SECURITY.md](SECURITY.md): threats, controls and known limitations
 - [docs/api.md](docs/api.md): HTTP API reference
+- [docs/widget.md](docs/widget.md): install the widget, what it guarantees
 - [docs/whatsapp-future.md](docs/whatsapp-future.md): how a WhatsApp channel would plug in

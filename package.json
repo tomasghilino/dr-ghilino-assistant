@@ -17,7 +17,8 @@
     "verify": "pnpm lint && pnpm typecheck && pnpm test",
     "dev:api": "pnpm --filter @ghilino/api dev",
     "cli": "tsx apps/cli/src/main.ts",
-    "test:live": "LIVE=1 vitest run --project live"
+    "test:live": "LIVE=1 vitest run --project live",
+    "test:e2e": "pnpm --filter @ghilino/widget build && vitest run --project e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.5",

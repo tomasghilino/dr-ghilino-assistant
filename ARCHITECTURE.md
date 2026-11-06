@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phase 5** (2026-11-06). Verified against the real InsForge project where marked _verified_; sections marked _to verify_ depend on InsForge
+Status: **Phase 6** (2026-11-06). Verified against the real InsForge project where marked _verified_; sections marked _to verify_ depend on InsForge
 behaviour that the docs do not state and that we check on a real project in Phase 1 or 8.
 
 ## 1. Goal and constraints
@@ -255,7 +255,7 @@ the model. See docs/whatsapp-future.md (written in Phase 5).
 | Deployable               | Built from                                                                     | Hosted on                                                |
 | ------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------- |
 | `chat-api` edge function | `apps/api` bundled with esbuild into one ESM file (npm deps as `npm:` imports) | InsForge Functions (Deno)                                |
-| `widget.js` + demo page  | `apps/widget` built with Vite                                                  | InsForge Sites                                           |
+| `widget.js` + demo page  | `apps/widget` built with esbuild (ADR 0014)                                    | InsForge Sites                                           |
 | Database schema          | `migrations/*.sql`                                                             | `insforge db migrations up`                              |
 | Knowledge base           | `pnpm ingest`                                                                  | Run by an admin; writes through admin-only SQL functions |
 
