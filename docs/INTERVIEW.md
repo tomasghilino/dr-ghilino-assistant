@@ -11,7 +11,7 @@ in the repository; the long version is [WALKTHROUGH.md](WALKTHROUGH.md).
 > site, says "the site doesn't say" instead of guessing, never gives medical advice, and sends
 > emergencies to 107 / 911 without even calling the model. It's TypeScript end to end: Claude
 > Haiku with four read-only tools, hybrid search in Postgres with pgvector, a serverless API on
-> InsForge, and an 18 KB widget in a Shadow DOM. I evaluated it with 42 scripted conversations and
+> InsForge, and an 18 KB widget in a Shadow DOM. It's live on the doctor's site. I evaluated it with 44 scripted conversations and
 > an LLM judge for faithfulness, and I measured whether RAG was even worth it against putting the
 > whole site in the prompt.
 
@@ -42,7 +42,7 @@ in the repository; the long version is [WALKTHROUGH.md](WALKTHROUGH.md).
 | Metric                                                        | Value                                               |
 | ------------------------------------------------------------- | --------------------------------------------------- |
 | Retrieval Recall@5 (32 answerable)                            | 100%, MRR 0.961                                     |
-| Agent evaluation (42 conversations)                           | 41 or 42 / 42 per run at low effort                 |
+| Agent evaluation (44 conversations)                           | 44/44 in the latest run at low effort               |
 | Faithful factual answers (judge)                              | 77 / 80                                             |
 | Medical questions declined, injections resisted, prompt leaks | all, all, none                                      |
 | Latency (median / p95)                                        | about 3 s / 5 s                                     |
@@ -93,7 +93,12 @@ idle minutes. Metrics have no column that could hold text.
 rate limits keyed by an HMAC of the IP, and a daily budget that stops model calls. The prompt cache
 cuts input cost by about ten times for the stable part.
 
-**What would you do next?** Deploy and confirm the three platform unknowns; streaming answers; a
+**What did the first deploy teach you?** Measure the platform instead of trusting it. A probe
+function showed that `X-Forwarded-For` puts client-sent values first, so my rate limiter was keying
+on a forgeable entry; and that the gateway rewrites CORS headers. Both fixed and verified in
+production before the widget went on the site.
+
+**What would you do next?** Streaming answers; a
 scheduled re-ingestion when the site changes; collect real failure cases with the practice; and, if
 the practice wants it, WhatsApp, which is a new adapter, not a new agent.
 

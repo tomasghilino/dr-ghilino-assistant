@@ -1,8 +1,7 @@
 # Security
 
 What can go wrong with a public, anonymous chat endpoint that spends money on every message and
-talks about health, and what stops it. Status: implemented and tested locally (Phases 1–5); not
-deployed (DEPLOYMENT.md).
+talks about health, and what stops it. Status: deployed on 2026-11-06 (DEPLOYMENT.md).
 
 ## Assets and threats
 
@@ -75,10 +74,14 @@ overrides for Node but Deno would install as published.
 
 - **Origin is a browser control.** A script can send any `Origin` header. Rate limits and the daily
   budget are what bound a determined client.
-- **The client IP comes from a proxy header** (`CLIENT_IP_HEADER`, `x-forwarded-for` by default).
-  Which header InsForge's function platform sets, and whether it overwrites a client-supplied value,
-  must be checked on the first deploy. If it does not overwrite it, per-client limits can be
-  dodged, and only the daily budget holds.
+- **The client IP comes from a proxy header.** InsForge appends to `X-Forwarded-For` instead of
+  overwriting it, so the leftmost entries are whatever the client sent. The API reads the visitor
+  two entries from the end (`CLIENT_IP_TRUSTED_HOPS=2`), verified in production with forged
+  headers (DEPLOYMENT.md). If InsForge changes its proxy chain, per-client limits may key on the
+  wrong entry; the daily budget still holds.
+- **CORS is set by InsForge's gateway**, not by the API: preflights are answered by the gateway and
+  responses carry `Access-Control-Allow-Origin: *`. The API's own `Origin` check is what refuses
+  other sites' pages (403), and it runs before anything else.
 - **The budget is read every 30 seconds per instance**, so a burst can overshoot it by a few
   requests. With Haiku at about US$0.0006 per message that is cents.
 - **Shared IPs** (a clinic's Wi-Fi, mobile carriers) share a rate-limit bucket.

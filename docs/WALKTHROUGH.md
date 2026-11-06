@@ -2,7 +2,8 @@
 
 A guided tour of the whole system, in the order a request meets it. Each section gives the essentials
 and links to the document with the details. State on 2026-11-06: everything is built and tested
-locally against the real services; **nothing is deployed** (DEPLOYMENT.md says what remains).
+against the real services and **deployed** on InsForge since 2026-11-06, with the widget on the
+doctor's site (DEPLOYMENT.md).
 
 ## 1. What it is
 
@@ -175,23 +176,22 @@ Details and known limitations: [SECURITY.md](../SECURITY.md), [PRIVACY.md](../PR
 
 ## 8. Deployment
 
-**Prepared, not run** ([DEPLOYMENT.md](../DEPLOYMENT.md)). The database part is live: the six
-migrations are applied to the InsForge project and the knowledge base is ingested. What remains is
-the function:
+**Live since 2026-11-06** ([DEPLOYMENT.md](../DEPLOYMENT.md)):
 
-1. `pnpm --filter @ghilino/api bundle` builds the widget and one 108 KiB ESM file with npm packages
-   as exact `npm:` imports. Verified on Deno 2.9.6 against the real services: it answers chat
-   requests and serves `widget.js` byte-for-byte.
-2. Set ten function secrets (keys, the session key, the rate-limit salt, the canary, the allowed
-   origins, the budget).
-3. `insforge functions deploy chat-api`, then `pnpm cli smoke --url … --origin …`: nine checks from
-   the outside, including one real question and its follow-up (9/9 against the local API).
-4. One schedule for the cleanup endpoint.
-5. On the site, one tag in the root layout ([docs/widget.md](widget.md#install)). The site itself is
-   not modified by this project.
+1. The database: six migrations applied, the knowledge base ingested.
+2. `pnpm --filter @ghilino/api bundle` builds the widget and one 108 KiB ESM file with npm packages
+   as exact `npm:` imports.
+3. Eleven function secrets (fresh production keys; the admin key comes from InsForge's reserved
+   `API_KEY`), then `insforge functions deploy chat-api`.
+4. `pnpm cli smoke` against production: 9/9, including one real question and its follow-up.
+5. A schedule calls the cleanup endpoint every 10 minutes, which also keeps the Free-plan project
+   from pausing.
+6. On the site, one `<Script>` in the root layout, production only, bottom left.
 
-To confirm on the first deploy: whether InsForge routes sub-paths to functions (a `?path=` fallback
-exists), which header carries the client IP, and the function timeout.
+The first deploy answered three questions the docs did not: the project host passes routes only
+as `?path=`; `X-Forwarded-For` puts client-sent values first, so the visitor is read two entries
+from the end (verified with forged headers); and the gateway owns CORS (`*`), so the API's own
+`Origin` check is what refuses other sites.
 
 ## 9. Evaluation results
 
@@ -201,7 +201,7 @@ exists), which header carries the client IP, and the function timeout.
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Retrieval, 47 questions             | Recall@5 100% on the 32 answerable ones, MRR@10 0.961 (hybrid)                                                           |
 | Confidence gate                     | refuses 0 of 30 answerable questions; lets 4 of 12 unanswerable through (the agent abstains)                             |
-| Agent, 42 conversations, `low`      | 39 to 42 of 42 per run; after fixing the grader's own bugs, 41 or 42                                                     |
+| Agent, `low`                        | 39 to 42 of 42 per run while the grader was being fixed; latest run (44 cases): 44/44                                    |
 | Agent, `medium`                     | 42/42, about 5% more expensive, p95 two seconds slower                                                                   |
 | Faithfulness (Sonnet 5.5 as judge)  | 77 of 80 factual answers fully supported in runs 2 to 5; one real imprecision                                            |
 | Safety cases                        | every medical question declined, both emergencies answered with the fixed text, every injection resisted, no prompt leak |
@@ -224,7 +224,8 @@ bigger number. The prompt cache only works across conversations with `SAFETY_PRO
 
 ## 11. Operational limitations
 
-- **Not deployed.** No public endpoint exists yet; the three platform questions above are open.
+- **Platform behaviour we measured, not read.** Routing, the IP chain and CORS come from probing
+  InsForge on 2026-11-06; if InsForge changes them, the smoke test is the first thing to run.
 - **Origin is a browser control.** A script can fake it; the rate limits and the daily budget are
   the real bound, and per-client limits depend on InsForge overwriting the client IP header.
 - **Shared IPs** (a clinic's Wi-Fi, mobile carriers) share a rate-limit bucket.

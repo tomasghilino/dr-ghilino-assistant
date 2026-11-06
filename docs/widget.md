@@ -8,56 +8,47 @@ DOM: about 18 KiB, no framework, no cookies, no trackers, no dependencies.
 ## Install
 
 The API function serves the script itself (`GET /widget.js`), so there is nothing else to host.
-Once the function is deployed (DEPLOYMENT.md), add this before `</body>`, once per page:
+InsForge passes the route in `?path=` (DEPLOYMENT.md, "What the first deploy showed"), so both URLs
+use that form. Add this before `</body>`, once per page:
 
 ```html
 <script
-  src="https://c94k6z7z.us-east.insforge.app/functions/chat-api/widget.js"
-  data-api="https://c94k6z7z.us-east.insforge.app/functions/chat-api"
+  src="https://c94k6z7z.us-east.insforge.app/functions/chat-api?path=/widget.js"
+  data-api="https://c94k6z7z.us-east.insforge.app/functions/chat-api?path=/"
   defer
 ></script>
 ```
 
-If the first deploy shows that InsForge does not route sub-paths to functions (DEPLOYMENT.md, step
-2), use `…/functions/chat-api?path=/widget.js` as `src` and `…/functions/chat-api?x=1` as
-`data-api`.
-
-**On the doctor's site** (Next.js, App Router), the same tag goes once in the root layout, so it is
-on every page:
+**On the doctor's site** (Next.js, App Router) it is a component rendered once in the root layout
+(`src/components/assistant-widget.tsx` in `tomasghilino/luisGhilinoMedico`, PR #5, 2026-11-06):
 
 ```tsx
-// app/layout.tsx
-import Script from "next/script";
-
-// inside <body>, after {children}:
 <Script
-  src="https://c94k6z7z.us-east.insforge.app/functions/chat-api/widget.js"
-  data-api="https://c94k6z7z.us-east.insforge.app/functions/chat-api"
-  strategy="afterInteractive"
+  src={`${site.assistantApi}?path=/widget.js`}
+  data-api={`${site.assistantApi}?path=/`}
+  data-position="left"
+  strategy="lazyOnload"
 />;
 ```
 
-Steps for whoever installs it:
+- Only when `VERCEL_ENV === "production"`, like Google Analytics: previews are not in
+  `ALLOWED_ORIGINS`, so the chat could not answer there.
+- `lazyOnload`: the script loads when the browser is idle, after the page.
+- `data-position="left"`: the site's WhatsApp button is bottom right.
+- Tested before publishing with a local production build against the deployed API, on desktop and
+  phone sizes: it answered with sources and buttons, no JavaScript errors.
 
-1. Deploy the API and run `pnpm cli smoke` against it (DEPLOYMENT.md).
-2. Check that `ALLOWED_ORIGINS` lists exactly the origins the site is served from (with and without
-   `www`, and any preview domain you want the widget on).
-3. Add the tag on a preview deployment of the site first, ask a question, then publish.
-4. The site sends no `Content-Security-Policy` today (checked 2026-11-06). If one is added later,
-   allow `https://c94k6z7z.us-east.insforge.app` in `script-src` and `connect-src`.
-5. To remove the assistant, delete the tag. Nothing else on the site changes.
+If a `Content-Security-Policy` is ever added to the site (there is none today), allow
+`https://c94k6z7z.us-east.insforge.app` in `script-src` and `connect-src`. To remove the assistant,
+delete the component from the layout; nothing else on the site changes.
 
-| Attribute       | Required | Meaning                                                                                            |
-| --------------- | -------- | -------------------------------------------------------------------------------------------------- |
-| `data-api`      | yes      | Base URL of the chat API (DEPLOYMENT.md). With a query string (`…?x=1`), the route goes in `path`. |
-| `data-position` | no       | `right` (default) or `left`.                                                                       |
-| `data-open`     | no       | `true` opens the panel on load (for a dedicated help page; not for every page).                    |
+| Attribute       | Required | Meaning                                                                               |
+| --------------- | -------- | ------------------------------------------------------------------------------------- |
+| `data-api`      | yes      | Base URL of the chat API. With a query string (`…?path=/`), the route goes in `path`. |
+| `data-position` | no       | `right` (default) or `left`.                                                          |
+| `data-open`     | no       | `true` opens the panel on load (for a dedicated help page; not for every page).       |
 
 The page's origin must be in the API's `ALLOWED_ORIGINS`, or every message gets a 403.
-
-Nothing is installed on the doctor's site yet: the brief says not to modify it, and the API is not
-deployed. When the practice decides, the change on the site is that one tag (in the Next.js app,
-a `<Script strategy="afterInteractive">` in the root layout).
 
 ## What the visitor sees
 

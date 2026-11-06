@@ -1,10 +1,10 @@
 # Deployment
 
-Status: **database and knowledge base only.** The schema is applied, the knowledge base is indexed
-(25 chunks, clinic profile) and every runtime SQL function exists. The API is built and its bundle
-was run on Deno locally, but **nothing public is deployed**: no edge function, no widget, no function
-secrets, no schedule. Deploying is the first step that exposes a cost-incurring endpoint, so it waits
-for the owner's go-ahead (see "Deploying the API" below).
+Status: **deployed on 2026-11-06.** The `chat-api` function (version `9fa6658`, branch
+`phase-8-deploy`) answers at `https://c94k6z7z.us-east.insforge.app/functions/chat-api?path=/…`,
+serves the widget, and passed the smoke test against production (9/9). The cleanup schedule runs
+every 10 minutes. The widget is on the doctor's site through `tomasghilino/luisGhilinoMedico` PR #5
+(Tomi's go-ahead the same day).
 
 ## InsForge project
 
@@ -75,7 +75,7 @@ pnpm cli db:status
 Calls `assistant_status()` with the admin key and prints counts (sources, documents, chunks,
 embedding models). It never prints content.
 
-## Deploying the API (prepared, not run)
+## Deploying the API
 
 The function is one ESM file built from `apps/api` and `packages/core`, with third-party packages
 as `npm:` imports (ADR 0001, ADR 0013).
@@ -87,72 +87,93 @@ pnpm --filter @ghilino/api bundle        # builds the widget, then apps/api/dist
 The same function serves the widget at `GET /widget.js` (the build is inlined in the bundle), so
 one deploy publishes both, and the script always matches the API it talks to.
 
-The bundle was run on Deno 2.9.6 against the real InsForge database, Claude and Voyage on
-2026-11-06 and answered through `/functions/chat-api/v1/chat`, using a two-line harness that
-`Deno.serve()`s the default export:
-
-```bash
-npx -y deno@2.9.6 run --allow-net --allow-env --allow-read --env-file=.env.local serve.ts
-```
+To run the bundle on Deno locally, `Deno.serve()` its default export from a two-line file and run
+`npx -y deno@2.9.6 run --allow-net --allow-env --allow-read --env-file=.env.local serve.ts`.
 
 ### 1. Function secrets
 
-Set once (values from `.env.local` or freshly generated; never commit them):
+InsForge secrets reach every function as environment variables. Two come with the project and are
+reserved: `INSFORGE_BASE_URL` and `API_KEY` (the admin key; the function reads it as
+`INSFORGE_API_KEY`, so a key rotation needs no change). Set on 2026-11-06, values never printed or
+committed:
 
-| Secret                   | Value                                                               |
-| ------------------------ | ------------------------------------------------------------------- |
-| `ANTHROPIC_API_KEY`      | the Anthropic key                                                   |
-| `VOYAGE_API_KEY`         | the Voyage key                                                      |
-| `INSFORGE_BASE_URL`      | `https://c94k6z7z.us-east.insforge.app`                             |
-| `INSFORGE_API_KEY`       | the admin key                                                       |
-| `RATE_LIMIT_SALT`        | `openssl rand -hex 32`                                              |
-| `SESSION_ENCRYPTION_KEY` | `openssl rand -base64 32`                                           |
-| `SAFETY_PROMPT_CANARY`   | `openssl rand -hex 8` (every instance then shares the prompt cache) |
-| `MAINTENANCE_TOKEN`      | `openssl rand -hex 32`                                              |
-| `ALLOWED_ORIGINS`        | `https://drluisghilino.com.ar,https://www.drluisghilino.com.ar`     |
-| `DAILY_BUDGET_USD`       | `2` (or what the practice decides)                                  |
+| Secret                   | Value                                                                  |
+| ------------------------ | ---------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY`      | the Anthropic key                                                      |
+| `VOYAGE_API_KEY`         | the Voyage key                                                         |
+| `RATE_LIMIT_SALT`        | 32 random bytes, hex (production only, not the one in `.env.local`)    |
+| `SESSION_ENCRYPTION_KEY` | 32 random bytes, base64 (production only)                              |
+| `SAFETY_PROMPT_CANARY`   | `GHL-` + 8 random bytes, hex (one value, so instances share the cache) |
+| `MAINTENANCE_TOKEN`      | 32 random bytes, hex                                                   |
+| `ALLOWED_ORIGINS`        | `https://drluisghilino.com.ar,https://www.drluisghilino.com.ar`        |
+| `DAILY_BUDGET_USD`       | `2`                                                                    |
+| `CLIENT_IP_TRUSTED_HOPS` | `2` (see "What the first deploy showed")                               |
+| `APP_ENV`                | `production`                                                           |
+| `APP_VERSION`            | the short commit hash of the deployed code (shown by `/health`)        |
 
 ```bash
-npx -y @insforge/cli secrets add ANTHROPIC_API_KEY <value>   # one per secret
+npx -y @insforge/cli secrets add RATE_LIMIT_SALT "$(openssl rand -hex 32)"   # one per secret
+npx -y @insforge/cli secrets update APP_VERSION --value "$(git rev-parse --short HEAD)"
 ```
+
+A running instance reads its configuration once, so **redeploy after changing a secret**.
 
 ### 2. Deploy and smoke-test
 
 ```bash
+pnpm --filter @ghilino/api bundle
+npx -y @insforge/cli secrets update APP_VERSION --value "$(git rev-parse --short HEAD)"
 npx -y @insforge/cli functions deploy chat-api --file apps/api/dist/chat-api.js \
-  --name "Chat API" --description "Dr. Ghilino assistant: POST /v1/chat"
-npx -y @insforge/cli functions list
-curl -s https://c94k6z7z.us-east.insforge.app/functions/chat-api/health
-pnpm cli smoke --url https://c94k6z7z.us-east.insforge.app/functions/chat-api \
+  --name "Chat API" --description "Dr. Ghilino assistant: POST /v1/chat, GET /widget.js"
+pnpm cli smoke --url "https://c94k6z7z.us-east.insforge.app/functions/chat-api?path=/" \
                --origin https://drluisghilino.com.ar
 ```
 
-`pnpm cli smoke` needs no keys: it checks the public API the way the widget uses it (health, the
-widget script, CORS for the site and for a foreign origin, the emergency fast path, one real
-question and its follow-up, DELETE) and exits with 1 if anything fails. Verified against the local
-API with the real Claude, Voyage and InsForge on 2026-11-06 (9/9 checks); not yet against a deployed
-function. Add `--no-model` to skip the two checks that call Claude.
+`pnpm cli smoke` needs no keys: it checks the public API the way the widget uses it (health and
+version, the widget script, the widget texts, the preflight, a foreign origin refused, the
+emergency fast path, one real question and its follow-up, DELETE) and exits with 1 if anything
+fails. `--no-model` skips the two checks that call Claude. Production, 2026-11-06: 9/9.
 
-To confirm on the first deploy (the docs do not say):
+### What the first deploy showed
 
-- whether sub-paths (`/functions/chat-api/v1/chat`) reach the function; if not, the entry accepts
-  `/functions/chat-api?path=/v1/chat`, and the widget's `data-api` must use that form;
-- which header carries the client IP and whether the platform overwrites it (`CLIENT_IP_HEADER`);
-- the function timeout (the turn deadline is 20 s).
+A throwaway function that echoed its request headers (deployed, called, deleted) answered the three
+open questions:
+
+- **Routing.** The documented URL, `https://<project>/functions/<slug>`, does not route sub-paths:
+  `/functions/chat-api/v1/chat` is a 404. The function receives the path `/chat-api`, so the route
+  travels as `?path=/v1/chat` (`apps/api/src/platform.ts`). The deploy also reports a second host,
+  `https://c94k6z7z.function2.insforge.app/<slug>/…`, which does route sub-paths, but it is not in
+  InsForge's docs, so nothing depends on it.
+- **Client IP.** `X-Forwarded-For` arrives as `<whatever the client sent>, <visitor>, <internal
+  LB>, <gateway>`. The first entry, which the code used until then, can be forged by anyone, so the
+  visitor is now read two entries from the end (`CLIENT_IP_TRUSTED_HOPS=2`). Checked in production:
+  ten requests with ten forged addresses hit the per-minute limit as one client.
+- **CORS belongs to the gateway.** InsForge answers preflights itself and sets
+  `Access-Control-Allow-Origin: *` on responses, replacing ours. The widget sends no credentials,
+  so browsers accept it. Pages on other sites are still refused, by the API's own `Origin` check
+  (403 before anything else runs), which browsers do not let a page forge.
+- **Timeout.** Still not documented. Answers take about 3 seconds (p95 about 5) against a 20-second
+  turn deadline.
 
 ### 3. Cleanup schedule
 
 ```bash
 npx -y @insforge/cli schedules create --name "Assistant cleanup" --cron "*/10 * * * *" \
-  --url "https://c94k6z7z.us-east.insforge.app/functions/chat-api/internal/maintenance" \
+  --url "https://c94k6z7z.us-east.insforge.app/functions/chat-api?path=/internal/maintenance" \
   --method POST --headers '{"Authorization": "Bearer ${{secrets.MAINTENANCE_TOKEN}}"}'
 ```
 
-### 4. Before the widget goes on the doctor's site
+Created on 2026-11-06 (`npx -y @insforge/cli schedules logs <id>` shows each run). It deletes
+expired sessions, two-day-old rate-limit counters and metrics older than 90 days. It also keeps the
+project active: the Free plan pauses a project after 7 days without requests, and this is a request
+every 10 minutes. If the project ever shows as paused (`npx -y @insforge/cli projects get`), that
+assumption was wrong: restore it and move to a daily external check or the Pro plan.
 
-The embed code and the steps for the site are in [docs/widget.md](docs/widget.md#install). Before
-that:
+### 4. On the doctor's site
 
-- The practice confirms `SAFETY_EMERGENCY_TEXT` and `SAFETY_CRISIS_TEXT`.
-- Free plan or Pro: the Free plan pauses after 7 idle days.
-- Rotate the `uak_` user key that was pasted in a chat.
+Installed with Tomi's go-ahead on 2026-11-06: one `<Script>` in the site's root layout, production
+only, bottom left (the WhatsApp button is bottom right). Embed code and steps:
+[docs/widget.md](docs/widget.md#install). To take the assistant off the site, delete that tag; to
+stop it everywhere, delete the function (`npx -y @insforge/cli functions delete chat-api`).
+
+Still open: rotate the `uak_` user key that was pasted in a chat.

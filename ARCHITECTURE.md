@@ -1,8 +1,8 @@
 # Architecture
 
-Status: **Phases 0 to 7 built, Phase 8 prepared, nothing deployed** (2026-11-06). Verified against
-the real InsForge project where marked _verified_; what depends on a deployed function (sub-path
-routing, the client IP header, the timeout) is checked on the first deploy (DEPLOYMENT.md).
+Status: **deployed** (2026-11-06): the `chat-api` function on InsForge, the widget on the doctor's
+site. Verified against the real project where marked _verified_; what the first deploy taught about
+routing, the client IP and CORS is in DEPLOYMENT.md.
 
 ## 1. Goal and constraints
 
@@ -42,7 +42,7 @@ flowchart LR
   SITE["Public site HTML + JSON-LD"]
 
   F -- "GET /widget.js (script tag)" --> W
-  W -- "POST /v1/chat (JSON)" --> F
+  W -- "POST ?path=/v1/chat (JSON)" --> F
   F -- "rpc()" --> DB
   F --> A
   F --> E
