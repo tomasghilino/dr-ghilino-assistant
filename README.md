@@ -18,8 +18,8 @@ embeddings for search.
 | 1. Foundation             | done    | Workspace, config, schema on InsForge, PGlite and live tests; see [DEPLOYMENT.md](DEPLOYMENT.md)      |
 | 2. Knowledge ingestion    | done    | 25 chunks + clinic profile on InsForge; see [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md)                    |
 | 3. Retrieval engine       | done    | Hybrid search + two-signal gate on InsForge; Recall@5 100%, see [EVALUATION.md](EVALUATION.md)        |
-| 4. Agent                  | next    |                                                                                                       |
-| 5. Backend API            | planned |                                                                                                       |
+| 4. Agent                  | done    | Claude Haiku 5.5, four read-only tools, JSON answer, four safety layers; `pnpm cli chat`              |
+| 5. Backend API            | next    |                                                                                                       |
 | 6. Widget                 | planned |                                                                                                       |
 | 7. Testing and evaluation | planned |                                                                                                       |
 | 8. Deployment             | planned | Schema and knowledge base are on InsForge; no public endpoint yet.                                    |

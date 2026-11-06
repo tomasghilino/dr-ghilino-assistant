@@ -9,6 +9,7 @@ import {
   serverConfigSchema,
 } from "@ghilino/core";
 import { createAdminClient } from "@insforge/sdk";
+import { askCommand, chatCommand } from "./commands/agent.ts";
 import { ingestCommand, kbListCommand } from "./commands/ingest.ts";
 import { evalRetrievalCommand, searchCommand } from "./commands/retrieval.ts";
 
@@ -52,6 +53,14 @@ const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promi
   "eval:retrieval": {
     summary: "Run evals/retrieval-cases.json against the knowledge base and save a report",
     run: evalRetrievalCommand,
+  },
+  ask: {
+    summary: "Ask the real assistant one question; prints sources, tools, tokens and cost",
+    run: askCommand,
+  },
+  chat: {
+    summary: "Talk to the real assistant in the terminal (memory-only session)",
+    run: chatCommand,
   },
   "db:status": {
     summary: "Call assistant_status() on InsForge with the admin key (counts only, no content)",

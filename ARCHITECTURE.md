@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phase 1** (2026-11-05). Verified against the real InsForge project where marked _verified_; sections marked _to verify_ depend on InsForge
+Status: **Phase 4** (2026-11-06). Verified against the real InsForge project where marked _verified_; sections marked _to verify_ depend on InsForge
 behaviour that the docs do not state and that we check on a real project in Phase 1 or 8.
 
 ## 1. Goal and constraints
@@ -160,12 +160,22 @@ must then say the site does not cover it). No reranker: ranking is not where the
   signatures) as opaque values so tool loops replay them unmodified.
 - **Tools**: four read-only tools with zod schemas, typed outputs and error results
   (`is_error`) instead of exceptions. Max 4 tool rounds per turn, wall-clock deadline per turn.
-- **Final answer**: a validated structured object, `{ answer, sourceIds, kind }`, where `kind` is
+- **Final answer**: structured outputs (`output_config.format`) on every call:
+  `{ answer, kind, source_ids, actions }`, where `kind` is
   `answered | abstained | declined_medical | emergency | out_of_scope | smalltalk`. It makes
-  abstention measurable and lets the server check citations. _To verify in Phase 4_: structured
-  outputs combined with tools on Haiku 5.5, against a plain-text answer with citation markers.
+  abstention measurable and lets the server check citations. _Verified in Phase 4_ with tools on
+  Haiku 5.5, adaptive thinking on (ADR 0012).
+- **Citations and buttons**: tool results carry `<source id="S1">` blocks numbered by a per-turn
+  registry; the server maps cited ids to titles and URLs and builds contact buttons (WhatsApp,
+  call, e-mail, directions) from the verified profile. The model never writes a link.
 - **Context management**: last 6 turns of plain text (no thinking blocks across turns, so the
-  history stays append-only), retrieved context capped at about 2,000 tokens, `max_tokens` 1,024.
+  history stays append-only), retrieved context capped at about 2,000 tokens, `max_tokens` 2,048
+  (thinking counts toward it). Within a turn the loop is append-only and replays thinking blocks
+  unchanged.
+- **Channel-independent pipeline**: `ChatService` (`packages/core/chat`) runs clean → emergency
+  fast path → redact → agent → remember for any channel (§9).
+- **Measured** (2026-11-06, real model): a one-tool question takes two calls, about 5–6 s and
+  US$0.0006.
 
 ## 6. Safety and privacy (summary; details in SECURITY.md and PRIVACY.md)
 

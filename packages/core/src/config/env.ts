@@ -19,13 +19,20 @@ const csv = z.string().transform((value) =>
 const positiveInt = (fallback: number, max = Number.MAX_SAFE_INTEGER) =>
   z.coerce.number().int().positive().max(max).default(fallback);
 
-const llmSchema = z.object({
+export const llmConfigSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1, "ANTHROPIC_API_KEY is required"),
   LLM_MODEL: z.string().min(1).default("claude-haiku-5-5"),
   LLM_EFFORT: z.enum(["low", "medium", "high"]).default("low"),
-  LLM_MAX_TOKENS: positiveInt(1024, 8192),
+  /** Thinking counts toward this cap; 2,048 leaves room for it plus a short JSON answer. */
+  LLM_MAX_TOKENS: positiveInt(2048, 8192),
   LLM_TIMEOUT_MS: positiveInt(15_000, 60_000),
   LLM_MAX_RETRIES: z.coerce.number().int().min(0).max(5).default(2),
+  /** Tool rounds per visitor message (ADR 0006). */
+  AGENT_MAX_TOOL_ROUNDS: z.coerce.number().int().min(1).max(8).default(4),
+  /** Wall-clock budget for one visitor message, all model and tool calls included. */
+  TURN_DEADLINE_MS: positiveInt(20_000, 60_000),
+  /** Previous turns (visitor + assistant pairs) kept in a session and shown to the model. */
+  AGENT_HISTORY_TURNS: z.coerce.number().int().min(0).max(20).default(6),
 });
 
 const embeddingsSchema = z
@@ -90,7 +97,6 @@ const httpSchema = z.object({
   ]),
   MAX_MESSAGE_CHARS: positiveInt(800, 4_000),
   MAX_BODY_BYTES: positiveInt(8_192, 65_536),
-  TURN_DEADLINE_MS: positiveInt(20_000, 60_000),
   /** Secret salt for hashing IPs before they are used as rate-limit keys. */
   RATE_LIMIT_SALT: z.string().min(16),
   RATE_LIMIT_PER_MINUTE: positiveInt(8, 1_000),
@@ -105,27 +111,46 @@ const sessionSchema = z.object({
     .string()
     .refine((value) => decodedLength(value) === 32, "must be 32 bytes, base64-encoded"),
   SESSION_TTL_MINUTES: positiveInt(30, 24 * 60),
-  SESSION_MAX_TURNS: positiveInt(6, 20),
 });
 
-const safetySchema = z.object({
+export const safetyConfigSchema = z.object({
+  /**
+   * Random code placed in the system prompt; an answer that contains it is discarded (prompt-leak
+   * canary). Set it as a secret so every function instance shares one system prompt and the
+   * provider cache; when unset, each instance draws its own. Generate: `openssl rand -hex 8`.
+   */
+  SAFETY_PROMPT_CANARY: z
+    .string()
+    .regex(/^[A-Za-z0-9-]{8,64}$/)
+    .optional(),
   SAFETY_EMERGENCY_TEXT: z
     .string()
     .min(1)
     .default(
       "Si es una emergencia, llamá ya al 107 (emergencias médicas) o al 911, o andá a la guardia más cercana. Este asistente no puede evaluar urgencias.",
     ),
+  /**
+   * Shown, without calling the model, when a message suggests a risk of self-harm. The 135 line
+   * (Centro de Asistencia al Suicida) is free from CABA and GBA; it is not staffed 24 hours, so 911
+   * comes first for immediate risk. To be confirmed by the practice before production.
+   */
+  SAFETY_CRISIS_TEXT: z
+    .string()
+    .min(1)
+    .default(
+      "Si estás pensando en hacerte daño, no estás solo/a: si hay riesgo inmediato llamá al 911. También podés llamar al Centro de Asistencia al Suicida, 135 (gratis desde CABA y GBA) o (011) 5275-1135 desde todo el país. Este asistente no puede ayudarte con esto, pero esas líneas sí.",
+    ),
 });
 
 export const serverConfigSchema = z
   .object({ APP_ENV: z.enum(["development", "test", "production"]).default("development") })
-  .and(llmSchema)
+  .and(llmConfigSchema)
   .and(embeddingsSchema)
   .and(retrievalConfigSchema)
   .and(databaseConfigSchema)
   .and(httpSchema)
   .and(sessionSchema)
-  .and(safetySchema);
+  .and(safetyConfigSchema);
 
 /** Ingestion settings that need no credentials (enough for a dry run). */
 export const ingestionSettingsSchema = z.object({
@@ -146,6 +171,13 @@ export const ingestConfigSchema = ingestionSettingsSchema
   .and(embeddingsSchema)
   .and(databaseConfigSchema);
 
+/** What `pnpm cli ask` and `pnpm cli chat` need: the agent without the HTTP layer. */
+export const agentCliConfigSchema = llmConfigSchema
+  .and(retrievalConfigSchema)
+  .and(embeddingsSchema)
+  .and(databaseConfigSchema)
+  .and(safetyConfigSchema);
+
 /** What `pnpm cli search` and `pnpm cli eval:retrieval` need: no LLM key, no HTTP secrets. */
 export const retrievalCliConfigSchema = retrievalConfigSchema
   .and(embeddingsSchema)
@@ -153,6 +185,9 @@ export const retrievalCliConfigSchema = retrievalConfigSchema
 
 export type ServerConfig = z.infer<typeof serverConfigSchema>;
 export type RetrievalConfig = z.infer<typeof retrievalConfigSchema>;
+export type LlmConfig = z.infer<typeof llmConfigSchema>;
+export type SafetyConfig = z.infer<typeof safetyConfigSchema>;
+export type AgentCliConfig = z.infer<typeof agentCliConfigSchema>;
 export type RetrievalCliConfig = z.infer<typeof retrievalCliConfigSchema>;
 export type IngestConfig = z.infer<typeof ingestConfigSchema>;
 export type IngestionSettings = z.infer<typeof ingestionSettingsSchema>;

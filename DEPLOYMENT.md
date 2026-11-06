@@ -62,6 +62,7 @@ Never edit a migration after it is applied; write a new one.
 | `20261105204859` | `kb-ingestion-functions`            | 2026-11-05 21:02 UTC |
 | `20261105214536` | `kb-hybrid-search`                  | 2026-11-05 21:58 UTC |
 | `20261105220124` | `kb-hybrid-search-lexical-coverage` | 2026-11-05 22:03 UTC |
+| `20261106164602` | `clinic-active-profile`             | 2026-11-06 16:51 UTC |
 
 ## Health check
 
