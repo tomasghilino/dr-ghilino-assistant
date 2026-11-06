@@ -146,7 +146,7 @@ export class ChatApi {
   }
 
   /**
-   * `data-api` is the API base. On InsForge it may need the `?path=` form (DEPLOYMENT.md): a base
+   * `data-api` is the API base. On InsForge it may need the `?path=` form (docs/deployment.md): a base
    * that already has a query string gets the route in `path` instead of the URL path.
    */
   private url(route: string): string {

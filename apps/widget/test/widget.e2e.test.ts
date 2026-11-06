@@ -385,6 +385,38 @@ describe("chat widget in Chromium", () => {
     expect(toggles).toEqual([true, false]);
   });
 
+  // Seen on the live site: /v1/config answers in about a second on a cold start, and a quick visitor
+  // can send a message before that. The greeting still gets its WhatsApp button.
+  it("adds the WhatsApp button to the greeting when the config arrives after the first message", async () => {
+    let release: () => void = () => {};
+    const configHeld = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route("**/v1/config", async (route) => {
+      await configHeld;
+      await route.continue();
+    });
+    steps.push(finalAnswer({ answer: "¡Hola! ¿En qué te ayudo?", kind: "smalltalk" }));
+    await page.reload();
+    await open();
+    await host().getByRole("textbox", { name: "Tu consulta" }).fill("hola");
+    await host().getByRole("button", { name: "Enviar" }).click();
+    await expect
+      .poll(() => host().locator(".message.assistant").count(), { timeout: 10_000 })
+      .toBe(2);
+    const greeting = host().locator(".message.assistant").first();
+    expect(await greeting.getByRole("link", { name: "Escribir por WhatsApp" }).count()).toBe(0);
+
+    release();
+    await expect
+      .poll(() => greeting.getByRole("link", { name: "Escribir por WhatsApp" }).count(), {
+        timeout: 10_000,
+      })
+      .toBe(1);
+    // The conversation is still there.
+    expect(await host().locator(".message.visitor").count()).toBe(1);
+  });
+
   it("has no serious accessibility violations (axe-core)", async () => {
     steps.push(toolUse({ name: "get_contact_information" }), (request) =>
       finalAnswer({

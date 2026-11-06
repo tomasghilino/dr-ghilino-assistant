@@ -38,6 +38,8 @@ class ChatWidget {
   private config: WidgetConfig = DEFAULT_CONFIG;
   private conversationId: string | null = null;
   private busy = false;
+  /** The greeting message, which gets the WhatsApp button once /v1/config has answered. */
+  private greeting: HTMLElement | null = null;
   /** Phones: the panel covers the screen (styles.ts) and follows the visible viewport. */
   private readonly phone = window.matchMedia("(max-width: 480px)");
   private releaseViewport: (() => void) | null = null;
@@ -195,6 +197,17 @@ class ChatWidget {
     }
     this.input.maxLength = this.config.maxMessageChars;
     if (!this.conversationId && !this.busy) this.startConversation();
+    else this.addGreetingActions(); // the visitor was faster than /v1/config: keep their messages
+  }
+
+  private greetingActions(): Action[] {
+    return this.config.actions.filter((action) => action.type === "whatsapp");
+  }
+
+  private addGreetingActions(): void {
+    if (!this.greeting || this.greeting.querySelector(".actions")) return;
+    const buttons = this.actionButtons(this.greetingActions());
+    if (buttons) this.greeting.append(buttons);
   }
 
   private startConversation(): void {
@@ -203,11 +216,11 @@ class ChatWidget {
     );
     // WhatsApp stays one tap away from the start: on the doctor's site the chat opens from the
     // WhatsApp button itself, and some visitors will have wanted WhatsApp.
-    this.appendAssistant({
+    this.greeting = this.appendAssistant({
       answer: this.config.greeting,
       kind: "smalltalk",
       sources: [],
-      actions: this.config.actions.filter((action) => action.type === "whatsapp"),
+      actions: this.greetingActions(),
     });
     this.suggestions.replaceChildren(
       ...this.config.suggestions.map((text) => {
@@ -341,7 +354,9 @@ class ChatWidget {
     this.scrollToEnd();
   }
 
-  private appendAssistant(reply: Pick<ChatReply, "answer" | "kind" | "sources" | "actions">): void {
+  private appendAssistant(
+    reply: Pick<ChatReply, "answer" | "kind" | "sources" | "actions">,
+  ): HTMLElement {
     const classes = ["message", "assistant"];
     if (reply.kind === "emergency") classes.push("emergency");
     const message = el("div", { class: classes.join(" ") });
@@ -366,6 +381,7 @@ class ChatWidget {
     if (actions) message.append(actions);
     this.log.append(message);
     this.scrollToEnd();
+    return message;
   }
 
   private appendError(text: string, actions: Action[]): void {
