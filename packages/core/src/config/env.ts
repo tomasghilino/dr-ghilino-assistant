@@ -103,6 +103,13 @@ const httpSchema = z.object({
   RATE_LIMIT_PER_DAY: positiveInt(60, 100_000),
   /** Global circuit breaker: once reached, the API answers with contact details only. */
   DAILY_BUDGET_USD: z.coerce.number().positive().default(2),
+  /**
+   * Request header carrying the client address, as set by the platform's proxy. Used only as a
+   * rate-limit key, hashed. A client can forge it where the platform does not overwrite it.
+   */
+  CLIENT_IP_HEADER: z.string().min(1).default("x-forwarded-for"),
+  /** Bearer token for POST /internal/maintenance (InsForge schedule). Unset disables the route. */
+  MAINTENANCE_TOKEN: z.string().min(32).optional(),
 });
 
 const sessionSchema = z.object({

@@ -15,7 +15,7 @@ import { evalRetrievalCommand, searchCommand } from "./commands/retrieval.ts";
 
 /**
  * Admin CLI. Runs on a developer's machine or in CI, never in the public API.
- * Commands are added phase by phase: eval:agent (7) and ops:report (7) are next.
+ * Commands are added phase by phase: eval:agent (7) is next.
  */
 const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promise<number> }> = {
   "config:check": {
@@ -61,6 +61,23 @@ const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promi
   chat: {
     summary: "Talk to the real assistant in the terminal (memory-only session)",
     run: chatCommand,
+  },
+  "ops:report": {
+    summary:
+      "Requests, outcomes, answer kinds, latency, tokens and cost for the last N days (--days 7)",
+    run: async (argv) => {
+      const { values } = parseArgs({
+        args: argv,
+        options: { days: { type: "string", default: "7" } },
+      });
+      const config = parseConfig(databaseConfigSchema, process.env);
+      const rpc = new InsforgeRpcClient(
+        createAdminClient({ baseUrl: config.INSFORGE_BASE_URL, apiKey: config.INSFORGE_API_KEY }),
+      );
+      const days = Math.max(1, Number.parseInt(values.days ?? "7", 10) || 7);
+      console.log(JSON.stringify(await rpc.value("metrics_summary", { p_days: days }), null, 2));
+      return 0;
+    },
   },
   "db:status": {
     summary: "Call assistant_status() on InsForge with the admin key (counts only, no content)",

@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phase 4** (2026-11-06). Verified against the real InsForge project where marked _verified_; sections marked _to verify_ depend on InsForge
+Status: **Phase 5** (2026-11-06). Verified against the real InsForge project where marked _verified_; sections marked _to verify_ depend on InsForge
 behaviour that the docs do not state and that we check on a real project in Phase 1 or 8.
 
 ## 1. Goal and constraints

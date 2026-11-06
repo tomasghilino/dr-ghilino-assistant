@@ -1,9 +1,10 @@
 # Deployment
 
-Status: **database and knowledge base only.** The schema is applied and the knowledge base is
-indexed (25 chunks, clinic profile). Nothing public is deployed yet: no edge function, no widget,
-no function secrets. This file grows
-with Phases 5, 6 and 8.
+Status: **database and knowledge base only.** The schema is applied, the knowledge base is indexed
+(25 chunks, clinic profile) and every runtime SQL function exists. The API is built and its bundle
+was run on Deno locally, but **nothing public is deployed**: no edge function, no widget, no function
+secrets, no schedule. Deploying is the first step that exposes a cost-incurring endpoint, so it waits
+for the owner's go-ahead (see "Deploying the API" below).
 
 ## InsForge project
 
@@ -63,6 +64,7 @@ Never edit a migration after it is applied; write a new one.
 | `20261105214536` | `kb-hybrid-search`                  | 2026-11-05 21:58 UTC |
 | `20261105220124` | `kb-hybrid-search-lexical-coverage` | 2026-11-05 22:03 UTC |
 | `20261106164602` | `clinic-active-profile`             | 2026-11-06 16:51 UTC |
+| `20261106165556` | `api-runtime-functions`             | 2026-11-06 17:00 UTC |
 
 ## Health check
 
@@ -72,3 +74,71 @@ pnpm cli db:status
 
 Calls `assistant_status()` with the admin key and prints counts (sources, documents, chunks,
 embedding models). It never prints content.
+
+## Deploying the API (prepared, not run)
+
+The function is one ESM file built from `apps/api` and `packages/core`, with third-party packages
+as `npm:` imports (ADR 0001, ADR 0013).
+
+```bash
+pnpm --filter @ghilino/api bundle        # → apps/api/dist/chat-api.js (about 88 KiB)
+```
+
+The bundle was run on Deno 2.9.6 against the real InsForge database, Claude and Voyage on
+2026-11-06 and answered through `/functions/chat-api/v1/chat`, using a two-line harness that
+`Deno.serve()`s the default export:
+
+```bash
+npx -y deno@2.9.6 run --allow-net --allow-env --allow-read --env-file=.env.local serve.ts
+```
+
+### 1. Function secrets
+
+Set once (values from `.env.local` or freshly generated; never commit them):
+
+| Secret                   | Value                                                               |
+| ------------------------ | ------------------------------------------------------------------- |
+| `ANTHROPIC_API_KEY`      | the Anthropic key                                                   |
+| `VOYAGE_API_KEY`         | the Voyage key                                                      |
+| `INSFORGE_BASE_URL`      | `https://c94k6z7z.us-east.insforge.app`                             |
+| `INSFORGE_API_KEY`       | the admin key                                                       |
+| `RATE_LIMIT_SALT`        | `openssl rand -hex 32`                                              |
+| `SESSION_ENCRYPTION_KEY` | `openssl rand -base64 32`                                           |
+| `SAFETY_PROMPT_CANARY`   | `openssl rand -hex 8` (every instance then shares the prompt cache) |
+| `MAINTENANCE_TOKEN`      | `openssl rand -hex 32`                                              |
+| `ALLOWED_ORIGINS`        | `https://drluisghilino.com.ar,https://www.drluisghilino.com.ar`     |
+| `DAILY_BUDGET_USD`       | `2` (or what the practice decides)                                  |
+
+```bash
+npx -y @insforge/cli secrets add ANTHROPIC_API_KEY <value>   # one per secret
+```
+
+### 2. Deploy and smoke-test
+
+```bash
+npx -y @insforge/cli functions deploy chat-api --file apps/api/dist/chat-api.js \
+  --name "Chat API" --description "Dr. Ghilino assistant: POST /v1/chat"
+npx -y @insforge/cli functions list
+curl -s https://c94k6z7z.us-east.insforge.app/functions/chat-api/health
+```
+
+To confirm on the first deploy (the docs do not say):
+
+- whether sub-paths (`/functions/chat-api/v1/chat`) reach the function; if not, the entry accepts
+  `/functions/chat-api?path=/v1/chat`, and the widget's `data-api` must use that form;
+- which header carries the client IP and whether the platform overwrites it (`CLIENT_IP_HEADER`);
+- the function timeout (the turn deadline is 20 s).
+
+### 3. Cleanup schedule
+
+```bash
+npx -y @insforge/cli schedules create --name "Assistant cleanup" --cron "*/10 * * * *" \
+  --url "https://c94k6z7z.us-east.insforge.app/functions/chat-api/internal/maintenance" \
+  --method POST --headers '{"Authorization": "Bearer ${{secrets.MAINTENANCE_TOKEN}}"}'
+```
+
+### 4. Before the widget goes on the doctor's site
+
+- The practice confirms `SAFETY_EMERGENCY_TEXT` and `SAFETY_CRISIS_TEXT`.
+- Free plan or Pro: the Free plan pauses after 7 idle days.
+- Rotate the `uak_` user key that was pasted in a chat.

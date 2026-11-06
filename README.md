@@ -12,17 +12,17 @@ embeddings for search.
 
 ## Status
 
-| Phase                     | State   | Notes                                                                                                 |
-| ------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| 0. Discovery and planning | done    | [Architecture](ARCHITECTURE.md), [ADRs](docs/adr), [knowledge inventory](docs/knowledge-inventory.md) |
-| 1. Foundation             | done    | Workspace, config, schema on InsForge, PGlite and live tests; see [DEPLOYMENT.md](DEPLOYMENT.md)      |
-| 2. Knowledge ingestion    | done    | 25 chunks + clinic profile on InsForge; see [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md)                    |
-| 3. Retrieval engine       | done    | Hybrid search + two-signal gate on InsForge; Recall@5 100%, see [EVALUATION.md](EVALUATION.md)        |
-| 4. Agent                  | done    | Claude Haiku 5.5, four read-only tools, JSON answer, four safety layers; `pnpm cli chat`              |
-| 5. Backend API            | next    |                                                                                                       |
-| 6. Widget                 | planned |                                                                                                       |
-| 7. Testing and evaluation | planned |                                                                                                       |
-| 8. Deployment             | planned | Schema and knowledge base are on InsForge; no public endpoint yet.                                    |
+| Phase                     | State   | Notes                                                                                                        |
+| ------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| 0. Discovery and planning | done    | [Architecture](ARCHITECTURE.md), [ADRs](docs/adr), [knowledge inventory](docs/knowledge-inventory.md)        |
+| 1. Foundation             | done    | Workspace, config, schema on InsForge, PGlite and live tests; see [DEPLOYMENT.md](DEPLOYMENT.md)             |
+| 2. Knowledge ingestion    | done    | 25 chunks + clinic profile on InsForge; see [KNOWLEDGE_BASE.md](KNOWLEDGE_BASE.md)                           |
+| 3. Retrieval engine       | done    | Hybrid search + two-signal gate on InsForge; Recall@5 100%, see [EVALUATION.md](EVALUATION.md)               |
+| 4. Agent                  | done    | Claude Haiku 5.5, four read-only tools, JSON answer, four safety layers; `pnpm cli chat`                     |
+| 5. Backend API            | done    | Hono API: CORS, limits, budget, encrypted sessions, metrics; bundle runs on Deno; [docs/api.md](docs/api.md) |
+| 6. Widget                 | next    |                                                                                                              |
+| 7. Testing and evaluation | planned |                                                                                                              |
+| 8. Deployment             | planned | Schema and knowledge base are on InsForge; no public endpoint yet.                                           |
 
 ## How it works (short version)
 
@@ -60,4 +60,6 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the layout and conventions.
 - [DEPLOYMENT.md](DEPLOYMENT.md): the InsForge project, credentials, migrations
 - [docs/learning](docs/learning): notes that explain the AI engineering concepts phase by phase
 - [EVALUATION.md](EVALUATION.md): retrieval evaluation, metrics and measured results
-- Coming with their phases: SECURITY.md, API docs
+- [SECURITY.md](SECURITY.md): threats, controls and known limitations
+- [docs/api.md](docs/api.md): HTTP API reference
+- [docs/whatsapp-future.md](docs/whatsapp-future.md): how a WhatsApp channel would plug in

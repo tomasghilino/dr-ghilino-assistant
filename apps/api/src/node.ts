@@ -1,9 +1,17 @@
+import { existsSync } from "node:fs";
 import { serve } from "@hono/node-server";
-import { createApp } from "./app.ts";
+import { createAppFromEnv } from "./compose.ts";
 
-// Local development entry. The InsForge (Deno) entry is added with the chat endpoint in Phase 5.
+// Local development entry: the same app as the InsForge function, on Node, with .env.local.
+// Requests from the demo page come from http://localhost:5173 (add it to ALLOWED_ORIGINS).
+if (existsSync(".env.local")) process.loadEnvFile(".env.local");
+else if (existsSync("../../.env.local")) process.loadEnvFile("../../.env.local");
+
 const port = Number(process.env.PORT ?? 8787);
-const app = createApp({ version: process.env.APP_VERSION ?? "dev" });
+const app = await createAppFromEnv(
+  { ...process.env, CLIENT_IP_HEADER: process.env.CLIENT_IP_HEADER ?? "x-forwarded-for" },
+  { version: process.env.APP_VERSION ?? "dev" },
+);
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`api listening on http://localhost:${info.port}`);

@@ -1,6 +1,7 @@
 import type { AgentCliConfig } from "../config/env.ts";
 import type { RpcClient } from "../db/rpc.ts";
 import { createEmbeddingProvider } from "../embeddings/factory.ts";
+import type { EmbeddingProvider } from "../embeddings/provider.ts";
 import { AnthropicProvider } from "../llm/anthropic.ts";
 import type { LlmProvider } from "../llm/types.ts";
 import { RetrievalService, retrievalSettingsFrom } from "../retrieval/service.ts";
@@ -25,9 +26,10 @@ export interface Assistant {
  */
 export function createAssistant(
   config: AgentCliConfig,
-  deps: { rpc: RpcClient; llm?: LlmProvider; fetch?: typeof fetch },
+  deps: { rpc: RpcClient; llm?: LlmProvider; embeddings?: EmbeddingProvider; fetch?: typeof fetch },
 ): Assistant {
-  const embeddings = createEmbeddingProvider(config, deps.fetch ? { fetch: deps.fetch } : {});
+  const embeddings =
+    deps.embeddings ?? createEmbeddingProvider(config, deps.fetch ? { fetch: deps.fetch } : {});
   const retrieval = new RetrievalService(
     { rpc: deps.rpc, embeddings },
     retrievalSettingsFrom(config),

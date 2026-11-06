@@ -18,8 +18,8 @@ Nothing is sent to the doctor, and nothing is written to the site's Google Analy
 | Data                                                                 | Where                    | How long                                        | Readable by                                      |
 | -------------------------------------------------------------------- | ------------------------ | ----------------------------------------------- | ------------------------------------------------ |
 | Last 6 turns of a conversation                                       | `chat_sessions`, AES-GCM | 30 minutes after the last message, then deleted | Only the API, which holds the key in its secrets |
-| Request metrics (latency, tokens, cost, error category, answer kind) | `request_metrics`        | 90 days (planned)                               | Administrators                                   |
-| Rate-limit counters keyed by an HMAC of the IP                       | `rate_limit_buckets`     | A few minutes to one day                        | Administrators                                   |
+| Request metrics (latency, tokens, cost, error category, answer kind) | `request_metrics`        | 90 days, deleted by the maintenance job         | Administrators                                   |
+| Rate-limit counters keyed by an HMAC of the IP                       | `rate_limit_buckets`     | Two days, deleted by the maintenance job        | Administrators                                   |
 | Knowledge base (public site content)                                 | `documents`, `chunks`    | Until replaced                                  | Administrators                                   |
 
 We do **not** store message text in logs or metrics, raw IP addresses, names, phone numbers or

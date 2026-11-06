@@ -193,10 +193,16 @@ importers:
       hono:
         specifier: 4.13.16
         version: 4.13.16
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@hono/node-server':
         specifier: 2.1.6
         version: 2.1.6(hono@4.13.16)
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
 
   apps/cli:
     dependencies:
