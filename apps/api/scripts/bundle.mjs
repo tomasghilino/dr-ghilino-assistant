@@ -45,7 +45,7 @@ const npmImports = {
   },
 };
 
-// The widget is served by the function at GET /widget.js (DEPLOYMENT.md), so its build is inlined.
+// The widget is served by the function at GET /widget.js (docs/deployment.md), so its build is inlined.
 const widgetPath = join(apiRoot, "../widget/dist/widget.js");
 let widget;
 try {

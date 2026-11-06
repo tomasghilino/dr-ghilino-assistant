@@ -73,7 +73,7 @@ deadline raise categorised errors that the API turns into a 503 with the same ki
 - Haiku at low effort sometimes answers smalltalk without tools (intended) and, rarely, might skip a
   tool for a factual question; the guard turns that into an abstention rather than an uncited fact.
   Phase 7 measured it: no uncited answer and no guard flag in five runs of 42 conversations
-  (EVALUATION.md).
+  (docs/evaluation.md).
 - The canary must be stable across instances for the prompt cache to work: `SAFETY_PROMPT_CANARY`.
 - Two texts need the practice's confirmation before production: `SAFETY_EMERGENCY_TEXT` and
   `SAFETY_CRISIS_TEXT`.

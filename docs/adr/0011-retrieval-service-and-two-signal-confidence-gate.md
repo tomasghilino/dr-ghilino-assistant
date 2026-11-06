@@ -5,7 +5,7 @@ Date: 2026-11-05 · Status: accepted · Refines [ADR 0004](0004-hybrid-search-wi
 ## Context
 
 ADR 0004 chose hybrid search fused with RRF in one SQL function. Building it and running the first
-retrieval evaluation ([EVALUATION.md](../../EVALUATION.md)) raised four questions ADR 0004 left
+retrieval evaluation ([evaluation.md](../evaluation.md)) raised four questions ADR 0004 left
 open: how the lexical query treats a whole question, where near-duplicates are removed, how the
 retrieved text reaches the model safely, and how to decide that the results are good enough to use.
 

@@ -73,7 +73,7 @@ export interface AgentResult {
 }
 
 /**
- * One visitor message → one answer (ADR 0006, ARCHITECTURE.md §3 and §5).
+ * One visitor message → one answer (ADR 0006, docs/architecture.md §3 and §5).
  *
  * The model chooses tools; the server enforces the limits: at most `maxToolRounds` rounds, a
  * wall-clock deadline, validated tool inputs, and an answer that must follow the final-answer

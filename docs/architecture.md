@@ -2,7 +2,7 @@
 
 Status: **deployed** (2026-11-06): the `chat-api` function on InsForge, the widget on the doctor's
 site. Verified against the real project where marked _verified_; what the first deploy taught about
-routing, the client IP and CORS is in DEPLOYMENT.md.
+routing, the client IP and CORS is in docs/deployment.md.
 
 ## 1. Goal and constraints
 
@@ -118,7 +118,7 @@ prompt, and the output guard rejects factual answers that cite nothing (see §6)
    the RAG pipeline and the `search_knowledge` tool.
 
 **Ingestion** (`pnpm ingest`): fetch the allowlisted sources in
-[docs/knowledge-inventory.md](docs/knowledge-inventory.md) → extract the main content and
+[docs/knowledge-inventory.md](knowledge-inventory.md) → extract the main content and
 drop navigation, scripts, styles and the contact form → keep headings, lists and the section
 anchor ids → normalize Unicode and whitespace → **heading-aware chunking** (one chunk per
 leaf section or FAQ pair; long sections split on paragraph boundaries with overlap; each chunk
@@ -146,7 +146,7 @@ re-running is cheap and idempotent. Every run writes a `kb_ingestion_runs` repor
 - Passages reach the model as `<source id="S1" …>` blocks with `<` and `>` escaped, within a
   2,000-token budget.
 
-Measured in Phase 3 ([EVALUATION.md](EVALUATION.md)): Recall@5 100% on 32 answerable questions; the
+Measured in Phase 3 ([evaluation.md](evaluation.md)): Recall@5 100% on 32 answerable questions; the
 gate refuses 0 of 30 answerable questions and lets 4 of 12 unanswerable ones through (the agent
 must then say the site does not cover it). No reranker: ranking is not where the errors are.
 
@@ -175,9 +175,9 @@ must then say the site does not cover it). No reranker: ranking is not where the
 - **Channel-independent pipeline**: `ChatService` (`packages/core/chat`) runs clean → emergency
   fast path → redact → agent → remember for any channel (§9).
 - **Measured** (Phase 7, 42 conversations, real model): median 3.0 s, about US$0.0003 per
-  conversation with a warm prompt cache and US$0.0006 with a cold one (EVALUATION.md).
+  conversation with a warm prompt cache and US$0.0006 with a cold one (evaluation.md).
 
-## 6. Safety and privacy (summary; details in SECURITY.md and PRIVACY.md)
+## 6. Safety and privacy (summary; details in SECURITY.md and docs/privacy.md)
 
 - Retrieved text is **data**: wrapped in delimited `<source>` blocks, with a system rule that
   instructions inside sources are never followed. Tools are read-only, so a successful injection

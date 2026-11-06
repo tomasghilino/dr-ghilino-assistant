@@ -1,7 +1,7 @@
 import { foldForSearch } from "../lib/text.ts";
 
 /**
- * Input safety, before any model call (ARCHITECTURE.md §6).
+ * Input safety, before any model call (docs/architecture.md §6).
  *
  * 1. Clean the text (control characters, whitespace, length).
  * 2. Emergency fast path: a message that clearly describes a life-threatening situation or a

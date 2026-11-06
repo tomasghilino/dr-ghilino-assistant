@@ -20,7 +20,7 @@ interface ChatReply {
 }
 
 /**
- * Post-deploy smoke test (DEPLOYMENT.md). Needs no keys: it only talks to the public API, so it
+ * Post-deploy smoke test (docs/deployment.md). Needs no keys: it only talks to the public API, so it
  * proves what a visitor's browser would see. Prints one line per check; exit code 1 if any fails.
  */
 export async function smokeCommand(argv: string[]): Promise<number> {

@@ -11,7 +11,7 @@ import {
 } from "../safety/input.ts";
 
 /**
- * One conversation, one agent, many channels (ARCHITECTURE.md §9). A channel adapter (the web
+ * One conversation, one agent, many channels (docs/architecture.md §9). A channel adapter (the web
  * API now, a WhatsApp webhook later) turns its input into an InboundMessage and renders the
  * OutboundMessage; everything in between is the same code, with the same safety rules.
  */

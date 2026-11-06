@@ -27,14 +27,14 @@ pnpm cli config:check         # lists missing or invalid variables by name
 | `pnpm cli <command>`                  | Admin CLI. `pnpm cli` lists the commands.                                                        |
 | `pnpm cli db:status`                  | Admin-key health probe of the InsForge database (counts only).                                   |
 | `pnpm cli ingest --dry-run`           | Fetch, extract, chunk and dedupe the sources; print the chunks. No writes.                       |
-| `pnpm cli ingest`                     | Index the knowledge base (see KNOWLEDGE_BASE.md).                                                |
+| `pnpm cli ingest`                     | Index the knowledge base (see docs/knowledge-base.md).                                           |
 | `pnpm cli kb:list`                    | Published documents, versions and chunk counts.                                                  |
 | `pnpm cli search "<q>"`               | How one question is ranked and gated; `--context` prints what the model would read.              |
-| `pnpm cli eval:retrieval`             | Run the retrieval evaluation and write a report (see EVALUATION.md).                             |
-| `pnpm cli eval:agent`                 | Run the agent evaluation (real Claude, judge model) and write a report (see EVALUATION.md).      |
+| `pnpm cli eval:retrieval`             | Run the retrieval evaluation and write a report (see docs/evaluation.md).                        |
+| `pnpm cli eval:agent`                 | Run the agent evaluation (real Claude, judge model) and write a report (see docs/evaluation.md). |
 | `pnpm cli ask "<q>"`                  | One question through the real assistant: answer, sources, tools, tokens, cost.                   |
 | `pnpm cli chat`                       | A conversation with the real assistant in the terminal (memory-only session).                    |
-| `pnpm cli smoke --url … --origin …`   | Check a running API from the outside, as the widget uses it (see DEPLOYMENT.md).                 |
+| `pnpm cli smoke --url … --origin …`   | Check a running API from the outside, as the widget uses it (see docs/deployment.md).            |
 | `pnpm cli ops:report`                 | Requests, outcomes, kinds, latency, tokens and cost from `request_metrics`.                      |
 | `pnpm --filter @ghilino/api bundle`   | Build the InsForge function into `apps/api/dist/chat-api.js`.                                    |
 | `pnpm --filter @ghilino/widget dev`   | Widget demo on http://localhost:5173 (run the API with `ALLOWED_ORIGINS=http://localhost:5173`). |
@@ -43,21 +43,33 @@ pnpm cli config:check         # lists missing or invalid variables by name
 
 ## Layout
 
+Package by feature, with ports and adapters: each folder in `packages/core/src` owns a port (an
+interface) and its adapters, and nothing in the core knows which runtime it is on.
+
 ```
-packages/core     Runtime-agnostic domain and application code (no Node/Deno APIs)
-  src/config      Environment schema (zod). The only place that knows variable names.
-  src/db          RpcClient port: every database call is a SQL function (ADR 0005)
-  src/domain      Shared types
-  src/embeddings  EmbeddingProvider port, Voyage and OpenAI-compatible adapters
-  src/ingestion   Admin-only pipeline (subpath @ghilino/core/ingestion, never in the API bundle)
-  src/lib         Hashing, text normalisation, stable JSON, errors
-  test/support    PGlite test database, offline hashing embedder, site fixtures, fake fetch
-  test/fixtures   Snapshots of the live site (2026-11-05)
-apps/api          HTTP adapter (Hono). Node entry now; InsForge (Deno) entry in Phase 5
-apps/cli          Admin commands (ingest, eval, ops), Node only
-migrations/       SQL migrations (InsForge CLI format: <14-digit version>_<name>.sql)
-knowledge/        sources.json: the allowlist of what the assistant may learn from
-docs/             Knowledge inventory, ADRs, learning notes
+packages/core            Runtime-agnostic domain and application code (no Node or Deno APIs)
+  src/agent              Agent loop, system prompt, four read-only tools, citations, final answer
+  src/chat               ChatService: one pipeline for every channel (clean, emergency, redact, agent)
+  src/retrieval          Hybrid search, confidence gate, context assembly
+  src/llm                LlmProvider port, Anthropic adapter, pricing
+  src/embeddings         EmbeddingProvider port, Voyage and OpenAI-compatible adapters
+  src/safety             Emergency fast path, PII redaction, output guard
+  src/sessions           Encrypted session store (AES-GCM, WebCrypto)
+  src/limits             Rate limiter, daily budget
+  src/observability      Content-free metrics
+  src/db                 RpcClient port (every database call is a SQL function, ADR 0005), adapters
+  src/config             Environment schema (zod): the only place that knows variable names
+  src/ingestion          Admin-only pipeline (subpath @ghilino/core/ingestion, not in the API bundle)
+  src/evaluation         Retrieval and agent evaluation (subpath @ghilino/core/evaluation)
+  src/domain, src/lib    Shared types; hashing, text, cache, errors
+  test/support           PGlite database, hashing embedder, scripted model, site fixtures
+apps/api                 HTTP adapter (Hono) and composition root; Node entry and InsForge (Deno) entry
+apps/widget              The embeddable widget (vanilla TypeScript, Shadow DOM) and its e2e tests
+apps/cli                 Admin commands: ingest, search, evaluations, smoke test, ops report
+migrations/              SQL migrations (InsForge CLI format: <14-digit version>_<name>.sql)
+knowledge/               sources.json: the allowlist of what the assistant may learn from
+evals/                   Evaluation datasets and the reports every number in evaluation.md comes from
+docs/                    Architecture, ADRs, deployment, evaluation, security, privacy, learning notes
 ```
 
 ## Rules the code follows
@@ -69,7 +81,7 @@ docs/             Knowledge inventory, ADRs, learning notes
 - Logs and errors never include message text, API keys or upstream error bodies.
 - Migrations must run on PostgreSQL 15 (InsForge) even though tests use Postgres 18, and every table
   they create must revoke the default grants InsForge gives `anon` and `authenticated` (ADR 0005).
-- InsForge work goes through `npx -y @insforge/cli` (see AGENTS.md); see DEPLOYMENT.md for the project.
+- InsForge work goes through `npx -y @insforge/cli` (see AGENTS.md); see docs/deployment.md for the project.
 
 ## Tests
 

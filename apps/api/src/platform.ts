@@ -1,6 +1,6 @@
 /**
  * What the hosting platform decides about a request, measured on InsForge on 2026-11-06
- * (DEPLOYMENT.md, "What the first deploy showed"). Runtime-agnostic, so it is unit-tested in Node.
+ * (docs/deployment.md, "What the first deploy showed"). Runtime-agnostic, so it is unit-tested in Node.
  */
 
 /**

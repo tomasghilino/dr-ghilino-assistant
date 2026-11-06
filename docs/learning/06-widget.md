@@ -54,7 +54,8 @@ The e2e test does not test a mock of the widget. It:
 3. runs the API on PGlite with the site fixtures and a scripted model (free and repeatable);
 4. drives Chromium with Playwright: clicks, typing, keyboard, viewport changes.
 
-Ten tests, about ten seconds. Screenshots against the real Claude are in `docs/img`.
+Ten tests at the end of Phase 6 (13 today, with the phone keyboard, the page-owned button and a late
+config), about ten seconds. Screenshots against the real Claude are in `docs/img`.
 
 ## Self-check questions
 

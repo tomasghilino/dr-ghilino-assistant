@@ -11,7 +11,7 @@ import { sourceBlock } from "../retrieval/context.ts";
  * model is tempted to fill in a plausible answer.
  *
  * With `website`, the whole site goes into the prompt and there is no search tool: the
- * "full context" baseline the agent evaluation compares with retrieval (EVALUATION.md). The
+ * "full context" baseline the agent evaluation compares with retrieval (docs/evaluation.md). The
  * source ids are fixed (S1..Sn), so the prompt stays the same and stays cached.
  */
 export function buildSystemPrompt(options: {

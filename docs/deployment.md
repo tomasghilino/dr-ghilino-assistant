@@ -1,10 +1,9 @@
 # Deployment
 
-Status: **deployed on 2026-11-06.** The `chat-api` function (version `9fa6658`, branch
-`phase-8-deploy`) answers at `https://c94k6z7z.us-east.insforge.app/functions/chat-api?path=/…`,
-serves the widget, and passed the smoke test against production (9/9). The cleanup schedule runs
-every 10 minutes. The widget is on the doctor's site through `tomasghilino/luisGhilinoMedico` PR #5
-(Tomi's go-ahead the same day).
+Status: **live since 2026-11-06.** The `chat-api` function answers at
+`https://c94k6z7z.us-east.insforge.app/functions/chat-api?path=/…`, serves the widget, and passes
+the smoke test against production. `GET /health` reports the deployed commit. The cleanup schedule
+runs every 10 minutes. On the doctor's site, the floating WhatsApp button opens the assistant.
 
 ## InsForge project
 
@@ -22,8 +21,8 @@ widget goes on the doctor's site, decide between keep-alive traffic and the Pro 
 ### Linking a machine
 
 ```bash
-npx -y @insforge/cli login --user-api-key <uak_...>   # or plain `login` for the browser flow
-npx -y @insforge/cli link --project-id 569c6e00-a972-4b68-a168-6ff66f4ca6b2
+npx -y @insforge/cli login                         # browser flow, or --user-api-key <key>
+npx -y @insforge/cli link --project-id <project-id>
 ```
 
 `link` writes `.insforge/project.json` (project id, admin API key, URL). It is git-ignored and must
@@ -171,9 +170,7 @@ assumption was wrong: restore it and move to a daily external check or the Pro p
 
 ### 4. On the doctor's site
 
-Installed with Tomi's go-ahead on 2026-11-06: one `<Script>` in the site's root layout, production
-only, bottom left (the WhatsApp button is bottom right). Embed code and steps:
-[docs/widget.md](docs/widget.md#install). To take the assistant off the site, delete that tag; to
-stop it everywhere, delete the function (`npx -y @insforge/cli functions delete chat-api`).
-
-Still open: rotate the `uak_` user key that was pasted in a chat.
+Installed on 2026-11-06: one `<Script>` in the site's root layout, production only, with no
+launcher of its own; the site's floating WhatsApp button opens it. Embed code and steps:
+[widget.md](widget.md#install). To take the assistant off the site, delete that tag; to stop it
+everywhere, delete the function (`npx -y @insforge/cli functions delete chat-api`).

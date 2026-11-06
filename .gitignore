@@ -24,3 +24,6 @@ playwright-report/
 .roo
 .trae
 .windsurf
+
+# Personal notes kept out of the public repository
+.private/

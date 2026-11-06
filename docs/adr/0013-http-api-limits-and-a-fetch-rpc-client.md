@@ -51,7 +51,7 @@ that exact file on Deno 2.9.6 and answering a real chat request through `/functi
 ## Consequences
 
 - The client IP header must be confirmed on the platform (SECURITY.md, known limitations).
-- The maintenance job needs an InsForge schedule and a `MAINTENANCE_TOKEN` secret (DEPLOYMENT.md).
+- The maintenance job needs an InsForge schedule and a `MAINTENANCE_TOKEN` secret (docs/deployment.md).
 - Every chat request makes two to four extra database calls (rate limit ×2, session read and write,
   metrics). Measured locally against InsForge from Buenos Aires: total latency 4–5 s, dominated by
   the two model calls.

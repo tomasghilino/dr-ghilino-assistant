@@ -1,5 +1,5 @@
 /**
- * Output guard (ARCHITECTURE.md §6): the last check before an answer reaches a visitor.
+ * Output guard (docs/architecture.md §6): the last check before an answer reaches a visitor.
  *
  * - Prompt-leak canary: the system prompt holds a random code; an answer that contains it is
  *   discarded whole.

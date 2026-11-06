@@ -1,7 +1,7 @@
 # Knowledge base
 
 How the assistant learns what it knows, and how an administrator keeps it current. The rules for
-what may be a source are in [docs/knowledge-inventory.md](docs/knowledge-inventory.md).
+what may be a source are in [docs/knowledge-inventory.md](knowledge-inventory.md).
 
 ## What is in it today (2026-11-05)
 
@@ -57,7 +57,7 @@ CLI: `apps/cli/src/commands/ingest.ts`.
 
 ## Administrator tasks
 
-All commands run from the repository root with credentials in `.env.local` (see DEPLOYMENT.md).
+All commands run from the repository root with credentials in `.env.local` (see docs/deployment.md).
 
 | Task                                        | How                                                                                                                                                            |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |

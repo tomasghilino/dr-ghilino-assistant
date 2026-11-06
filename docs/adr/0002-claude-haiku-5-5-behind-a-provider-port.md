@@ -33,4 +33,4 @@ configuration, and another provider must be addable without touching the agent.
 ## Consequences
 
 Haiku at low effort may skip a search it should do; the system prompt and the output guard
-(§6 of ARCHITECTURE.md) compensate, and the eval measures it.
+(§6 of docs/architecture.md) compensate, and the eval measures it.
