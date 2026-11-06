@@ -108,6 +108,11 @@ const httpSchema = z.object({
    * rate-limit key, hashed. A client can forge it where the platform does not overwrite it.
    */
   CLIENT_IP_HEADER: z.string().min(1).default("x-forwarded-for"),
+  /**
+   * Proxies that append to CLIENT_IP_HEADER after the visitor's address: the visitor is this many
+   * entries from the end (entries further left were sent by the client). 2 on InsForge.
+   */
+  CLIENT_IP_TRUSTED_HOPS: z.coerce.number().int().min(0).max(10).default(0),
   /** Bearer token for POST /internal/maintenance (InsForge schedule). Unset disables the route. */
   MAINTENANCE_TOKEN: z.string().min(32).optional(),
 });

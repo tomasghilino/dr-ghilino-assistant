@@ -17,6 +17,7 @@ import {
 } from "@ghilino/core";
 import type { Hono } from "hono";
 import { createApp } from "./app.ts";
+import { clientAddress } from "./platform.ts";
 
 /**
  * The composition root shared by the Node entry (local development, e2e tests) and the Deno
@@ -70,7 +71,8 @@ export async function createAppFromEnv(
     version: platform.version,
     ...(platform.log ? { log: platform.log } : {}),
     ...(platform.widgetScript ? { widgetScript: platform.widgetScript } : {}),
-    clientIp: (request) => (request.headers.get(ipHeader) ?? "").split(",")[0]?.trim() || "unknown",
+    clientIp: (request) =>
+      clientAddress(request.headers.get(ipHeader), config.CLIENT_IP_TRUSTED_HOPS),
     settings: {
       allowedOrigins: config.ALLOWED_ORIGINS,
       maxMessageChars: config.MAX_MESSAGE_CHARS,

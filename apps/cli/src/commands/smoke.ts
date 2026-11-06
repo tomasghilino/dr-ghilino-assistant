@@ -9,7 +9,7 @@ const USAGE = `Usage: pnpm cli smoke --url <api base> --origin <allowed origin> 
 
   Examples:
     pnpm cli smoke --url http://localhost:8787 --origin http://localhost:5173
-    pnpm cli smoke --url https://c94k6z7z.us-east.insforge.app/functions/chat-api \\
+    pnpm cli smoke --url "https://c94k6z7z.us-east.insforge.app/functions/chat-api?path=/" \\
                    --origin https://drluisghilino.com.ar`;
 
 interface ChatReply {
@@ -37,7 +37,17 @@ export async function smokeCommand(argv: string[]): Promise<number> {
     console.log(USAGE);
     return values.help ? 0 : 2;
   }
-  const base = values.url.replace(/\/+$/, "");
+  const baseUrl = values.url;
+  // Same rule as the widget: a base with a query string (InsForge: "…/functions/chat-api?path=/")
+  // gets the route in `path`; otherwise the route is appended to the URL path.
+  const at = (route: string) => {
+    const url = new URL(baseUrl);
+    if (url.search) {
+      url.searchParams.set("path", route);
+      return url.toString();
+    }
+    return `${baseUrl.replace(/\/+$/, "")}${route}`;
+  };
   const origin = values.origin;
   let failures = 0;
   const check = async (name: string, run: () => Promise<string>) => {
@@ -51,7 +61,7 @@ export async function smokeCommand(argv: string[]): Promise<number> {
     }
   };
   const chat = (body: unknown, from = origin) =>
-    fetch(`${base}/v1/chat`, {
+    fetch(at(`/v1/chat`), {
       method: "POST",
       headers: { Origin: from, "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -61,7 +71,7 @@ export async function smokeCommand(argv: string[]): Promise<number> {
   };
 
   await check("health", async () => {
-    const response = await fetch(`${base}/health`);
+    const response = await fetch(at(`/health`));
     expectStatus(response, 200);
     const body = (await response.json()) as { status?: string; version?: string };
     if (body.status !== "ok") throw new Error(`status ${body.status}`);
@@ -69,7 +79,7 @@ export async function smokeCommand(argv: string[]): Promise<number> {
   });
 
   await check("widget script", async () => {
-    const response = await fetch(`${base}/widget.js`);
+    const response = await fetch(at(`/widget.js`));
     expectStatus(response, 200);
     const type = response.headers.get("Content-Type") ?? "";
     if (!type.startsWith("text/javascript")) throw new Error(`Content-Type ${type}`);
@@ -79,7 +89,7 @@ export async function smokeCommand(argv: string[]): Promise<number> {
   });
 
   await check("widget texts and CORS for the allowed origin", async () => {
-    const response = await fetch(`${base}/v1/config`, { headers: { Origin: origin } });
+    const response = await fetch(at(`/v1/config`), { headers: { Origin: origin } });
     expectStatus(response, 200);
     const allowed = response.headers.get("Access-Control-Allow-Origin");
     if (allowed !== origin) throw new Error(`Access-Control-Allow-Origin ${allowed}`);
@@ -89,7 +99,7 @@ export async function smokeCommand(argv: string[]): Promise<number> {
   });
 
   await check("CORS preflight", async () => {
-    const response = await fetch(`${base}/v1/chat`, {
+    const response = await fetch(at(`/v1/chat`), {
       method: "OPTIONS",
       headers: {
         Origin: origin,
@@ -146,7 +156,7 @@ export async function smokeCommand(argv: string[]): Promise<number> {
 
     await check("DELETE forgets the conversation", async () => {
       if (!conversationId) throw new Error("no conversation id");
-      const response = await fetch(`${base}/v1/chat/${conversationId}`, {
+      const response = await fetch(at(`/v1/chat/${conversationId}`), {
         method: "DELETE",
         headers: { Origin: origin },
       });
