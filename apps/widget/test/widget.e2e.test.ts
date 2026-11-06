@@ -50,10 +50,16 @@ describe("chat widget in Chromium", () => {
         response.writeHead(200, { "Content-Type": "text/javascript" }).end(WIDGET_JS);
         return;
       }
+      // /own-button: the page brings its own button (a WhatsApp link) and the widget has none,
+      // like the doctor's site. Without the widget, the link still goes to WhatsApp.
+      const ownButton = request.url?.startsWith("/own-button");
+      const body = ownButton
+        ? `<main><h1>Página de prueba</h1></main><a id="wa" href="https://wa.me/5491140336567" aria-label="Escribir por WhatsApp">WA</a><script>document.getElementById("wa").addEventListener("click", (event) => { const bot = window.ghilinoAssistant; if (!bot) return; event.preventDefault(); bot.toggle(event.currentTarget); });</script><script src="/widget.js" data-api="${apiOrigin}" data-launcher="none" defer></script>`
+        : `<main><h1>Página de prueba</h1><p>Contenido.</p></main><script src="/widget.js" data-api="${apiOrigin}" defer></script>`;
       response
         .writeHead(200, { "Content-Type": "text/html; charset=utf-8" })
         .end(
-          `<!doctype html><html lang="es-AR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Prueba</title></head><body><main><h1>Página de prueba</h1><p>Contenido.</p></main><script src="/widget.js" data-api="${apiOrigin}" defer></script></body></html>`,
+          `<!doctype html><html lang="es-AR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Prueba</title></head><body>${body}</body></html>`,
         );
     });
     await new Promise<void>((resolve) => pageServer.listen(0, "127.0.0.1", resolve));
@@ -345,6 +351,38 @@ describe("chat widget in Chromium", () => {
 
     await host().getByRole("button", { name: "Cerrar el asistente virtual" }).click();
     expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("");
+  });
+
+  it("opens from the page's own button when there is no launcher, and shows WhatsApp at once", async () => {
+    await page.goto(`${pageOrigin}/own-button`);
+    await page.waitForFunction(() => "ghilinoAssistant" in window);
+    expect(await host().getByRole("button", { name: "Abrir el asistente virtual" }).count()).toBe(
+      0,
+    );
+    const toggles: boolean[] = [];
+    await page.exposeFunction("recordToggle", (open: boolean) => toggles.push(open));
+    await page.evaluate(() =>
+      window.addEventListener("ghilino-assistant:toggle", (event) =>
+        (window as unknown as { recordToggle: (open: boolean) => void }).recordToggle(
+          (event as CustomEvent<{ open: boolean }>).detail.open,
+        ),
+      ),
+    );
+
+    await page.locator("#wa").click();
+    await expect.poll(() => host().getByRole("dialog").isVisible()).toBe(true);
+    expect(page.url()).toContain("/own-button"); // the link did not navigate
+    // The greeting carries the WhatsApp button from /v1/config (the verified profile).
+    const whatsapp = host()
+      .locator(".message.assistant")
+      .first()
+      .getByRole("link", { name: "Escribir por WhatsApp" });
+    expect(await whatsapp.getAttribute("href")).toMatch(/^https:\/\/wa\.me\//);
+
+    await page.keyboard.press("Escape");
+    await expect.poll(() => host().getByRole("dialog").isVisible()).toBe(false);
+    expect(await page.evaluate(() => document.activeElement?.id)).toBe("wa");
+    expect(toggles).toEqual([true, false]);
   });
 
   it("has no serious accessibility violations (axe-core)", async () => {

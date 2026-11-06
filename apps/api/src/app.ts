@@ -107,8 +107,10 @@ export function createApp(deps: AppDeps): Hono {
     });
   }
 
-  app.get("/v1/config", (c) => {
+  app.get("/v1/config", async (c) => {
     c.header("Cache-Control", "public, max-age=300");
+    // The WhatsApp button under the greeting, from the verified profile (empty if unavailable).
+    const contact = deps.chat ? await deps.chat.contact().catch(() => null) : null;
     return c.json({
       ...WIDGET_CONFIG,
       privacyNote: WIDGET_CONFIG.privacyNote.replace(
@@ -116,6 +118,7 @@ export function createApp(deps: AppDeps): Hono {
         String(settings?.sessionTtlMinutes ?? 30),
       ),
       maxMessageChars: settings?.maxMessageChars ?? 800,
+      actions: contact ? safeActions(contact.actions) : [],
     });
   });
 

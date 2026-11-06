@@ -266,6 +266,13 @@ describe("HTTP API (PGlite, site fixtures, scripted model)", () => {
     expect(body.disclosure).toContain("inteligencia artificial");
     expect(body.privacyNote).toContain("30 minutos");
     expect(body.suggestions.length).toBeGreaterThan(0);
+    // The WhatsApp button under the greeting comes from the verified clinic profile.
+    expect((body as unknown as { actions: Array<{ type: string; url: string }> }).actions).toEqual([
+      expect.objectContaining({
+        type: "whatsapp",
+        url: expect.stringMatching(/^https:\/\/wa\.me\//),
+      }),
+    ]);
   });
 
   it("serves the widget script to other origins, and 404 when it is not built", async () => {

@@ -32,6 +32,16 @@ interface Options {
   api: string;
   position: "right" | "left";
   open: boolean;
+  /** false: the page has its own button and opens the chat through `window.ghilinoAssistant`. */
+  launcher: boolean;
+}
+
+/** What a page may call when it brings its own button (`data-launcher="none"`). */
+export interface AssistantControls {
+  open(trigger?: HTMLElement): void;
+  close(): void;
+  toggle(trigger?: HTMLElement): void;
+  isOpen(): boolean;
 }
 
 export class ChatWidget {
@@ -43,6 +53,9 @@ export class ChatWidget {
   /** Phones: the panel covers the screen (styles.ts) and follows the visible viewport. */
   private readonly phone = window.matchMedia("(max-width: 480px)");
   private releaseViewport: (() => void) | null = null;
+  /** Where focus goes back on close when the page, not the widget, owns the button. */
+  private returnFocus: HTMLElement | null = null;
+  private readonly ownLauncher: boolean;
 
   private launcher!: HTMLButtonElement;
   private panel!: HTMLElement;
@@ -55,6 +68,7 @@ export class ChatWidget {
 
   constructor(host: HTMLElement, options: Options) {
     this.api = new ChatApi(options.api);
+    this.ownLauncher = options.launcher;
     this.root = host.attachShadow({ mode: "open" });
     host.dataset.position = options.position;
     this.applyStyles();
@@ -178,7 +192,8 @@ export class ChatWidget {
     });
 
     this.panel.append(header, this.log, this.status, form);
-    this.root.append(this.launcher, this.panel);
+    if (this.ownLauncher) this.root.append(this.launcher, this.panel);
+    else this.root.append(this.panel);
     this.startConversation();
     this.onInput();
   }
@@ -198,11 +213,13 @@ export class ChatWidget {
     this.log.replaceChildren(
       el("p", { class: "disclosure", "data-text": "disclosure" }, this.config.disclosure),
     );
+    // WhatsApp stays one tap away from the start: on the doctor's site the chat opens from the
+    // WhatsApp button itself, and some visitors will have wanted WhatsApp.
     this.appendAssistant({
       answer: this.config.greeting,
       kind: "smalltalk",
       sources: [],
-      actions: [],
+      actions: this.config.actions.filter((action) => action.type === "whatsapp"),
     });
     this.suggestions.replaceChildren(
       ...this.config.suggestions.map((text) => {
@@ -222,6 +239,25 @@ export class ChatWidget {
     }
   }
 
+  /** The controls a page uses with `data-launcher="none"` (see `mount`). */
+  controls(): AssistantControls {
+    return {
+      open: (trigger) => {
+        this.returnFocus = trigger ?? null;
+        this.setOpen(true);
+      },
+      close: () => this.setOpen(false),
+      toggle: (trigger) => {
+        if (this.panel.hidden === false) this.setOpen(false);
+        else {
+          this.returnFocus = trigger ?? null;
+          this.setOpen(true);
+        }
+      },
+      isOpen: () => this.panel.hidden === false,
+    };
+  }
+
   private setOpen(open: boolean): void {
     this.panel.hidden = !open;
     this.launcher.setAttribute("aria-expanded", String(open));
@@ -239,9 +275,12 @@ export class ChatWidget {
       // A new conversation starts at the top (disclosure first); an ongoing one at the last message.
       if (this.log.querySelector(".message.visitor")) this.scrollToEnd();
       else this.log.scrollTop = 0;
-    } else {
+    } else if (this.ownLauncher) {
       this.launcher.focus();
+    } else {
+      this.returnFocus?.focus();
     }
+    window.dispatchEvent(new CustomEvent("ghilino-assistant:toggle", { detail: { open } }));
   }
 
   /**
@@ -456,7 +495,11 @@ export function mount(script: HTMLScriptElement | null): ChatWidget | null {
     api,
     position: script?.dataset.position === "left" ? "left" : "right",
     open: script?.dataset.open === "true",
+    launcher: script?.dataset.launcher !== "none",
   });
   globals[marker] = widget;
+  // A page with its own button (data-launcher="none") opens the chat through these.
+  globals.ghilinoAssistant = widget.controls();
+  window.dispatchEvent(new CustomEvent("ghilino-assistant:ready"));
   return widget;
 }
