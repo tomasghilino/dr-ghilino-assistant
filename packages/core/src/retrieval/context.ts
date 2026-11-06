@@ -26,24 +26,49 @@ export interface AssembledContext {
 export function assembleContext(
   chunks: readonly RetrievedChunk[],
   maxTokens: number,
+  register: (title: string, url: string) => string = sequentialIds(),
 ): AssembledContext {
   const blocks: string[] = [];
   const sources: AssembledContext["sources"] = [];
   let tokens = 0;
   let omitted = 0;
   for (const chunk of chunks) {
-    const id = `S${sources.length + 1}`;
-    const block = `<source id="${id}" title="${escapeAttribute(chunk.headingPath.join(" › ") || chunk.title)}" url="${escapeAttribute(chunk.url)}">\n${escapeText(chunk.content)}\n</source>`;
-    const cost = estimateTokens(block);
+    const title = chunk.headingPath.join(" › ") || chunk.title;
+    // Cost with a placeholder id: ids are a few characters, and allocating one for a chunk that
+    // does not fit would leave a gap in the citation ids.
+    const cost = estimateTokens(sourceBlock("S000", title, chunk.url, chunk.content));
     if (tokens + cost > maxTokens) {
       omitted += 1;
       continue;
     }
-    blocks.push(block);
-    sources.push({ id, title: chunk.title, url: chunk.url, chunkId: chunk.chunkId });
+    const visibleTitle = visitorTitle(chunk);
+    const id = register(visibleTitle, chunk.url);
+    blocks.push(sourceBlock(id, title, chunk.url, chunk.content));
+    sources.push({ id, title: visibleTitle, url: chunk.url, chunkId: chunk.chunkId });
     tokens += cost;
   }
   return { text: blocks.join("\n\n"), sources, tokens, omitted };
+}
+
+/** One `<source>` block with escaped attributes and body (see `assembleContext`). */
+export function sourceBlock(id: string, title: string, url: string, body: string): string {
+  return `<source id="${escapeAttribute(id)}" title="${escapeAttribute(title)}" url="${escapeAttribute(url)}">\n${escapeText(body)}\n</source>`;
+}
+
+/**
+ * The title a visitor sees under an answer: the heading path without the page name, which every
+ * chunk of the page shares ("Consultorios › Boulogne" rather than "Dr. Luis Antonio Ghilino").
+ */
+export function visitorTitle(chunk: Pick<RetrievedChunk, "headingPath" | "title">): string {
+  return chunk.headingPath.slice(1).join(" › ") || chunk.title;
+}
+
+function sequentialIds(): (title: string, url: string) => string {
+  let next = 0;
+  return () => {
+    next += 1;
+    return `S${next}`;
+  };
 }
 
 function escapeText(text: string): string {

@@ -1,6 +1,6 @@
 # ADR 0006: Agentic RAG (the model chooses tools) with a validated final answer
 
-Date: 2026-11-05 · Status: accepted, final-answer format to confirm in Phase 4
+Date: 2026-11-05 · Status: accepted; the final-answer format was confirmed in Phase 4 ([ADR 0012](0012-agent-loop-structured-answer-and-safety-layers.md))
 
 ## Context
 

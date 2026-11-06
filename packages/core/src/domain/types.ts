@@ -21,3 +21,13 @@ export interface SourceRef {
   title: string;
   url: string;
 }
+
+/**
+ * A contact button under an answer. The server builds the link from the verified clinic profile
+ * (WhatsApp, phone, e-mail, map); the model can only ask for a type.
+ */
+export interface ContactAction {
+  type: "whatsapp" | "call" | "email" | "directions";
+  label: string;
+  url: string;
+}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es-AR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Demo del asistente</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        background: #eff6f7;
+        color: #010c11;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 64px 24px;
+        line-height: 1.6;
+      }
+      h1 {
+        color: #05445e;
+        font-size: 2rem;
+        margin: 0 0 12px;
+      }
+      code {
+        background: #fff;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Página de prueba del widget</h1>
+      <p>
+        Esta página no es el sitio del Dr. Ghilino: es un entorno local para probar el asistente. El
+        botón de abajo a la derecha abre el chat, que habla con la API en
+        <code>__WIDGET_API__</code>.
+      </p>
+      <p>Para instalarlo en un sitio, ver <code>docs/widget.md</code>.</p>
+    </main>
+    <script src="./widget.js" data-api="__WIDGET_API__" defer></script>
+  </body>
+</html>

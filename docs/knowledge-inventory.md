@@ -110,4 +110,6 @@ for _today's_ content, putting the whole site into the system prompt would work 
 very little. We still build retrieval because the knowledge base is meant to grow (PDFs,
 curated FAQs, administrator notes), because chunk-level retrieval gives precise
 citations, and because the abstention threshold needs a relevance score. The evaluation
-(Phase 7) includes a "full context" baseline so the comparison is measured, not assumed.
+(Phase 7) includes a "full context" baseline so the comparison is measured, not assumed. Result:
+no quality difference on 42 conversations; the whole site in the prompt answers about a second
+faster but costs more when the prompt cache is cold. Retrieval stays (ADR 0015).

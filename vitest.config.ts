@@ -8,7 +8,12 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["{packages,apps}/*/{src,test}/**/*.test.ts"],
-          exclude: ["**/*.int.test.ts", "**/*.live.test.ts", "**/node_modules/**"],
+          exclude: [
+            "**/*.int.test.ts",
+            "**/*.live.test.ts",
+            "**/*.e2e.test.ts",
+            "**/node_modules/**",
+          ],
         },
       },
       {
@@ -17,6 +22,15 @@ export default defineConfig({
           include: ["{packages,apps}/*/{src,test}/**/*.int.test.ts"],
           testTimeout: 30_000,
           hookTimeout: 30_000,
+        },
+      },
+      {
+        // The built widget in Chromium against the API app (PGlite, scripted model): pnpm test:e2e.
+        test: {
+          name: "e2e",
+          include: ["apps/*/test/**/*.e2e.test.ts"],
+          testTimeout: 30_000,
+          hookTimeout: 60_000,
         },
       },
       {

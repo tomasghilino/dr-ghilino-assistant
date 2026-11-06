@@ -15,22 +15,31 @@ pnpm cli config:check         # lists missing or invalid variables by name
 
 ## Everyday commands
 
-| Command                     | What it does                                                                        |
-| --------------------------- | ----------------------------------------------------------------------------------- |
-| `pnpm verify`               | Lint, type check and all tests. Run before every push.                              |
-| `pnpm test:unit`            | Pure functions, fast.                                                               |
-| `pnpm test:integration`     | Real SQL on PGlite with every migration applied, HTTP via Hono.                     |
-| `pnpm test:live`            | Opt-in checks against the real InsForge project (needs `.env.local`). Never in CI.  |
-| `pnpm typecheck`            | `tsc` per package (TypeScript 7).                                                   |
-| `pnpm lint` / `format`      | Biome.                                                                              |
-| `pnpm dev:api`              | Local API on http://localhost:8787 (health only in Phase 1).                        |
-| `pnpm cli <command>`        | Admin CLI. `pnpm cli` lists the commands.                                           |
-| `pnpm cli db:status`        | Admin-key health probe of the InsForge database (counts only).                      |
-| `pnpm cli ingest --dry-run` | Fetch, extract, chunk and dedupe the sources; print the chunks. No writes.          |
-| `pnpm cli ingest`           | Index the knowledge base (see KNOWLEDGE_BASE.md).                                   |
-| `pnpm cli kb:list`          | Published documents, versions and chunk counts.                                     |
-| `pnpm cli search "<q>"`     | How one question is ranked and gated; `--context` prints what the model would read. |
-| `pnpm cli eval:retrieval`   | Run the retrieval evaluation and write a report (see EVALUATION.md).                |
+| Command                               | What it does                                                                                     |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `pnpm verify`                         | Lint, type check and all tests. Run before every push.                                           |
+| `pnpm test:unit`                      | Pure functions, fast.                                                                            |
+| `pnpm test:integration`               | Real SQL on PGlite with every migration applied, HTTP via Hono.                                  |
+| `pnpm test:live`                      | Opt-in checks against the real InsForge project (needs `.env.local`). Never in CI.               |
+| `pnpm typecheck`                      | `tsc` per package (TypeScript 7).                                                                |
+| `pnpm lint` / `format`                | Biome.                                                                                           |
+| `pnpm dev:api`                        | Local API on http://localhost:8787 with `.env.local` (real Claude, Voyage, InsForge).            |
+| `pnpm cli <command>`                  | Admin CLI. `pnpm cli` lists the commands.                                                        |
+| `pnpm cli db:status`                  | Admin-key health probe of the InsForge database (counts only).                                   |
+| `pnpm cli ingest --dry-run`           | Fetch, extract, chunk and dedupe the sources; print the chunks. No writes.                       |
+| `pnpm cli ingest`                     | Index the knowledge base (see KNOWLEDGE_BASE.md).                                                |
+| `pnpm cli kb:list`                    | Published documents, versions and chunk counts.                                                  |
+| `pnpm cli search "<q>"`               | How one question is ranked and gated; `--context` prints what the model would read.              |
+| `pnpm cli eval:retrieval`             | Run the retrieval evaluation and write a report (see EVALUATION.md).                             |
+| `pnpm cli eval:agent`                 | Run the agent evaluation (real Claude, judge model) and write a report (see EVALUATION.md).      |
+| `pnpm cli ask "<q>"`                  | One question through the real assistant: answer, sources, tools, tokens, cost.                   |
+| `pnpm cli chat`                       | A conversation with the real assistant in the terminal (memory-only session).                    |
+| `pnpm cli smoke --url … --origin …`   | Check a running API from the outside, as the widget uses it (see DEPLOYMENT.md).                 |
+| `pnpm cli ops:report`                 | Requests, outcomes, kinds, latency, tokens and cost from `request_metrics`.                      |
+| `pnpm --filter @ghilino/api bundle`   | Build the InsForge function into `apps/api/dist/chat-api.js`.                                    |
+| `pnpm --filter @ghilino/widget dev`   | Widget demo on http://localhost:5173 (run the API with `ALLOWED_ORIGINS=http://localhost:5173`). |
+| `pnpm --filter @ghilino/widget build` | Build `apps/widget/dist/widget.js`.                                                              |
+| `pnpm test:e2e`                       | Build the widget and run it in Chromium against the API app (PGlite, scripted model).            |
 
 ## Layout
 

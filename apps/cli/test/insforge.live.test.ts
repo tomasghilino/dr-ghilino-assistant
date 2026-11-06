@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { InsforgeRpcClient } from "@ghilino/core";
+import { InsforgeRestRpcClient, InsforgeRpcClient } from "@ghilino/core";
 import { createAdminClient, createClient } from "@insforge/sdk";
 import { beforeAll, describe, expect, it } from "vitest";
 
@@ -73,3 +73,25 @@ function required(name: string): string {
   if (!value) throw new Error(`${name} is not set (see .env.example)`);
   return value;
 }
+
+describe.skipIf(!LIVE)("InsforgeRestRpcClient (live)", () => {
+  it("returns what the SDK client returns, and is denied with the anon key", async () => {
+    const baseUrl = required("INSFORGE_BASE_URL");
+    const apiKey = required("INSFORGE_API_KEY");
+    const rest = new InsforgeRestRpcClient({ baseUrl, apiKey, timeoutMs: 10_000 });
+    const sdk = new InsforgeRpcClient(createAdminClient({ baseUrl, apiKey, timeout: 10_000 }));
+    expect(await rest.value("assistant_status")).toEqual(await sdk.value("assistant_status"));
+    expect(await rest.value("clinic_active_profile")).toEqual(
+      await sdk.value("clinic_active_profile"),
+    );
+    const spent = await rest.value<number>("budget_spent_today");
+    expect(Number(spent)).toBeGreaterThanOrEqual(0);
+
+    const anon = new InsforgeRestRpcClient({
+      baseUrl,
+      apiKey: required("INSFORGE_ANON_KEY"),
+      timeoutMs: 10_000,
+    });
+    await expect(anon.value("assistant_status")).rejects.toThrow(/42501/);
+  });
+});

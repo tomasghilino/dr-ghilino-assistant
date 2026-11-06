@@ -9,12 +9,14 @@ import {
   serverConfigSchema,
 } from "@ghilino/core";
 import { createAdminClient } from "@insforge/sdk";
+import { askCommand, chatCommand } from "./commands/agent.ts";
+import { evalAgentCommand } from "./commands/agent-eval.ts";
 import { ingestCommand, kbListCommand } from "./commands/ingest.ts";
 import { evalRetrievalCommand, searchCommand } from "./commands/retrieval.ts";
+import { smokeCommand } from "./commands/smoke.ts";
 
 /**
  * Admin CLI. Runs on a developer's machine or in CI, never in the public API.
- * Commands are added phase by phase: eval:agent (7) and ops:report (7) are next.
  */
 const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promise<number> }> = {
   "config:check": {
@@ -52,6 +54,39 @@ const COMMANDS: Record<string, { summary: string; run: (args: string[]) => Promi
   "eval:retrieval": {
     summary: "Run evals/retrieval-cases.json against the knowledge base and save a report",
     run: evalRetrievalCommand,
+  },
+  ask: {
+    summary: "Ask the real assistant one question; prints sources, tools, tokens and cost",
+    run: askCommand,
+  },
+  chat: {
+    summary: "Talk to the real assistant in the terminal (memory-only session)",
+    run: chatCommand,
+  },
+  "eval:agent": {
+    summary: "Run evals/agent-cases.json through the real assistant and grade it (checks + judge)",
+    run: evalAgentCommand,
+  },
+  smoke: {
+    summary: "Check a running API from the outside, as the widget uses it (--url, --origin)",
+    run: smokeCommand,
+  },
+  "ops:report": {
+    summary:
+      "Requests, outcomes, answer kinds, latency, tokens and cost for the last N days (--days 7)",
+    run: async (argv) => {
+      const { values } = parseArgs({
+        args: argv,
+        options: { days: { type: "string", default: "7" } },
+      });
+      const config = parseConfig(databaseConfigSchema, process.env);
+      const rpc = new InsforgeRpcClient(
+        createAdminClient({ baseUrl: config.INSFORGE_BASE_URL, apiKey: config.INSFORGE_API_KEY }),
+      );
+      const days = Math.max(1, Number.parseInt(values.days ?? "7", 10) || 7);
+      console.log(JSON.stringify(await rpc.value("metrics_summary", { p_days: days }), null, 2));
+      return 0;
+    },
   },
   "db:status": {
     summary: "Call assistant_status() on InsForge with the admin key (counts only, no content)",

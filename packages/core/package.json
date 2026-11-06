@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "1.4.0",
     "linkedom": "0.18.15",
     "zod": "4.6.7"
   },
