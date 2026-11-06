@@ -31,6 +31,8 @@ export interface WidgetConfig {
   privacyNote: string;
   suggestions: string[];
   maxMessageChars: number;
+  /** Contact buttons under the greeting (WhatsApp), built by the API from the verified profile. */
+  actions: Action[];
 }
 
 /** Used when /v1/config cannot be reached: the widget still works, with these texts. */
@@ -44,6 +46,7 @@ export const DEFAULT_CONFIG: WidgetConfig = {
   privacyNote:
     "Tus mensajes se procesan con servicios de inteligencia artificial de terceros. El historial se borra a los 30 minutos sin actividad.",
   suggestions: ["¿Dónde atiende?", "¿Cómo pido un turno?"],
+  actions: [],
   maxMessageChars: 800,
 };
 
@@ -75,6 +78,10 @@ export class ChatApi {
           typeof body.maxMessageChars === "number"
             ? body.maxMessageChars
             : DEFAULT_CONFIG.maxMessageChars,
+        actions: list<Action>(
+          body.actions,
+          (item) => typeof item.label === "string" && typeof item.url === "string",
+        ),
       };
     } catch {
       return DEFAULT_CONFIG;
